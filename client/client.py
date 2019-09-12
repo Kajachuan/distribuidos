@@ -1,6 +1,17 @@
 #!/usr/bin/env python3
 
-import sys, getopt
+import sys, getopt, socket
+
+def start():
+    query, address = parse_args(sys.argv[1:])
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(('master', 8080))
+    client.send((query + ' ' + address).encode())
+
+    response = client.recv(4096).decode()
+    print(response)
+    client.send("END".encode())
+    client.close()
 
 def parse_args(argv):
     try:
@@ -11,9 +22,9 @@ def parse_args(argv):
 
     for option, arg in options:
         if option in ("-a", "--analyze"):
-            print("Analizar " + arg)
-        elif option in ("-r", "--report"):
-            print("Reporte de " + arg)
+            return "analyze", arg
+        if option in ("-r", "--report"):
+            return "report", arg
 
 if __name__ == "__main__":
-    parse_args(sys.argv[1:])
+    start()

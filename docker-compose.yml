@@ -1,5 +1,11 @@
 version: '3'
 services:
+  master:
+    build: master/
+    command: python ./master.py
+
   client:
     build: client/
     command: python ./client.py -a sarasa
+    depends_on:
+      - master
