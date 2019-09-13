@@ -21,3 +21,17 @@ services:
       - ./client:/client
     depends_on:
       - server
+
+  ftp_server:
+    image: stilliard/pure-ftpd:hardened
+    ports:
+      - '21:21'
+      - '30000-30009:30000-30009'
+    volumes:
+      - ./ftp_server/data:/home/username/
+      - ./ftp_server/passwd:/etc/pure-ftpd/passwd
+    environment:
+      PUBLICHOST: 'localhost'
+      FTP_USER_NAME: username
+      FTP_USER_PASS: mypass
+      FTP_USER_HOME: /home/username
