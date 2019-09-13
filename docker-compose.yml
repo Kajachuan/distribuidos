@@ -1,11 +1,23 @@
 version: '3'
 services:
-  master:
-    build: master/
-    command: python ./master.py
+  server:
+    build: server/
+    command: python3 -u ./server.py
+    volumes:
+      - ./server:/server
 
-  client:
+  client_analyze:
     build: client/
-    command: python ./client.py -a sarasa
+    command: python3 ./client.py -a sarasa
+    volumes:
+      - ./client:/client
     depends_on:
-      - master
+      - server
+
+  client_report:
+    build: client/
+    command: python3 ./client.py -r sarasa
+    volumes:
+      - ./client:/client
+    depends_on:
+      - server
