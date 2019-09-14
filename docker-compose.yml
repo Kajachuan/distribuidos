@@ -5,6 +5,8 @@ services:
     command: python3 -u ./server.py
     volumes:
       - ./server:/server
+    depends_on:
+      - ftp_server
     networks:
       net:
         ipv4_address: 172.28.1.1
@@ -44,6 +46,12 @@ services:
     networks:
       net:
         ipv4_address: 172.28.1.3
+
+  # database:
+  #   build: database/
+  #   command: python3 ./database.py
+  #   volumes:
+  #     - ./database:/database
 
 networks:
   net:

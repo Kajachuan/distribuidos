@@ -29,6 +29,7 @@ def dispatch(requests, to_analyze, to_query):
             path = '/'
 
         if request == 'analyze':
+            path = '/'
             to_analyze.put((id, address, path))
         else:
             print('Mandar a reporte ' + address + ' Path: ' + path + '. ID: ' + id)
@@ -42,8 +43,9 @@ def analyze(to_analyze):
         control.sendall(('LIST ' + path + '\r\n').encode())
         resp = control.recv(4096).decode()
         print(resp)
+
         list = data.recv(4096).decode()
-        print(list)
+        parse_list_and_send(list, to_analyze, path, address)
 
         data.close()
         control.close()
@@ -66,6 +68,19 @@ def connect_to_server(address):
 
     data = socket.create_connection((address, port))
     return control, data
+
+def parse_list_and_send(list, to_analyze, path, address):
+    list = list.split('\n')
+    for i in range(0, len(list) - 1):
+        data = list[i].split()
+        abs_path = '/'.join(['' if path == '/' else path, data[8]])
+
+        if data[0][0] == 'd':
+            id = str(uuid.uuid1())
+            to_analyze.put((id, address, abs_path))
+        else:
+            pass
+            # Enviar a database (abs_path, data[4])
 
 if __name__ == '__main__':
     requests = mp.Queue()
