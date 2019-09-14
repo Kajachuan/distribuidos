@@ -37,23 +37,9 @@ def analyze(to_analyze):
     while True:
         id, address, path = to_analyze.get()
 
-        control = socket.create_connection((address, 21))
-        resp = control.recv(4096).decode()
-        print(resp)
-        control.sendall(b'USER username\r\n')
-        resp = control.recv(4096).decode()
-        print(resp)
-        control.sendall(b'PASS mypass\r\n')
-        resp = control.recv(4096).decode()
-        print(resp)
-        control.sendall(b'PASV\r\n')
-        resp = control.recv(4096).decode()
-        print(resp)
-        info = resp.split('(')[1].split(')')[0].split(',')
-        port = int(info[4]) * 256 + int(info[5])
+        control, data = connect_to_server(address)
 
-        data = socket.create_connection((address, port))
-        control.sendall(b'LIST /\r\n')
+        control.sendall(('LIST ' + path + '\r\n').encode())
         resp = control.recv(4096).decode()
         print(resp)
         list = data.recv(4096).decode()
@@ -61,6 +47,25 @@ def analyze(to_analyze):
 
         data.close()
         control.close()
+
+def connect_to_server(address):
+    control = socket.create_connection((address, 21))
+    resp = control.recv(4096).decode()
+    print(resp)
+    control.sendall(b'USER username\r\n')
+    resp = control.recv(4096).decode()
+    print(resp)
+    control.sendall(b'PASS mypass\r\n')
+    resp = control.recv(4096).decode()
+    print(resp)
+    control.sendall(b'PASV\r\n')
+    resp = control.recv(4096).decode()
+    print(resp)
+    info = resp.split('(')[1].split(')')[0].split(',')
+    port = int(info[4]) * 256 + int(info[5])
+
+    data = socket.create_connection((address, port))
+    return control, data
 
 if __name__ == '__main__':
     requests = mp.Queue()
