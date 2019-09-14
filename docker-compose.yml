@@ -5,33 +5,49 @@ services:
     command: python3 -u ./server.py
     volumes:
       - ./server:/server
+    networks:
+      net:
+        ipv4_address: 172.28.1.1
 
   client_analyze:
     build: client/
-    command: python3 ./client.py -a sarasa
+    command: python3 ./client.py -a 172.28.1.3
     volumes:
       - ./client:/client
     depends_on:
       - server
+    networks:
+      net:
+        ipv4_address: 172.28.1.2
 
-  client_report:
-    build: client/
-    command: python3 ./client.py -r sarasa
-    volumes:
-      - ./client:/client
-    depends_on:
-      - server
+  # client_report:
+  #   build: client/
+  #   command: python3 ./client.py -r sarasa
+  #   volumes:
+  #     - ./client:/client
+  #   depends_on:
+  #     - server
+  #   networks:
+  #     net:
+  #       ipv4_address: 172.28.1.4
 
   ftp_server:
-    image: stilliard/pure-ftpd:hardened
+    image: delfer/alpine-ftp-server
     ports:
       - '21:21'
-      - '30000-30009:30000-30009'
+      - '21000-21010:21000-21010'
     volumes:
-      - ./ftp_server/data:/home/username/
-      - ./ftp_server/passwd:/etc/pure-ftpd/passwd
+      - ./ftp_server/ftp:/ftp/ftp
     environment:
-      PUBLICHOST: 'localhost'
-      FTP_USER_NAME: username
-      FTP_USER_PASS: mypass
-      FTP_USER_HOME: /home/username
+      ADDRESS: '172.28.1.3'
+      USERS: 'username|mypass'
+    networks:
+      net:
+        ipv4_address: 172.28.1.3
+
+networks:
+  net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16

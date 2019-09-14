@@ -36,16 +36,31 @@ def dispatch(requests, to_analyze, to_query):
 def analyze(to_analyze):
     while True:
         id, address, path = to_analyze.get()
-        ftp = socket.create_connection(('ftp_server', 21))
-        resp = ftp.recv(4096).decode()
+
+        control = socket.create_connection((address, 21))
+        resp = control.recv(4096).decode()
         print(resp)
-        ftp.sendall(b'USER username\n')
-        resp = ftp.recv(4096).decode()
+        control.sendall(b'USER username\r\n')
+        resp = control.recv(4096).decode()
         print(resp)
-        ftp.sendall(b'PASS mypass\n')
-        resp = ftp.recv(4096).decode()
+        control.sendall(b'PASS mypass\r\n')
+        resp = control.recv(4096).decode()
         print(resp)
-        ftp.close()
+        control.sendall(b'PASV\r\n')
+        resp = control.recv(4096).decode()
+        print(resp)
+        info = resp.split('(')[1].split(')')[0].split(',')
+        port = int(info[4]) * 256 + int(info[5])
+
+        data = socket.create_connection((address, port))
+        control.sendall(b'LIST /\r\n')
+        resp = control.recv(4096).decode()
+        print(resp)
+        list = data.recv(4096).decode()
+        print(list)
+
+        data.close()
+        control.close()
 
 if __name__ == '__main__':
     requests = mp.Queue()
