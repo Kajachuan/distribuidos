@@ -76,6 +76,7 @@ def parse_list_and_send(list, to_analyze, path, address):
         abs_path = '/'.join(['' if path == '/' else path, data[8]])
 
         if data[0][0] == 'd':
+            print((abs_path, data[4]))
             id = str(uuid.uuid1())
             to_analyze.put((id, address, abs_path))
         else:
@@ -83,15 +84,18 @@ def parse_list_and_send(list, to_analyze, path, address):
             # Enviar a database (abs_path, data[4])
 
 if __name__ == '__main__':
+    manager = mp.Manager()
     requests = mp.Queue()
-    to_analyze = mp.Queue()
+    to_analyze = manager.Queue()
     to_query = mp.Queue()
 
-    worker = mp.Process(target=analyze, args=(to_analyze,))
-    worker.start()
+    workers_pool = mp.Pool(5, analyze, (to_analyze,))
 
     dispatcher = mp.Process(target=dispatch, args=(requests, to_analyze, to_query,))
     dispatcher.start()
 
     receiver = mp.Process(target=receive, args=(requests,))
     receiver.start()
+
+    dispatcher.join()
+    receiver.join()
