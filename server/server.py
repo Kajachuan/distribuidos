@@ -85,17 +85,13 @@ def parse_list_and_send(list, to_analyze, path, address):
 
 if __name__ == '__main__':
     manager = mp.Manager()
-    requests = mp.Queue()
+    requests = manager.Queue()
     to_analyze = manager.Queue()
-    to_query = mp.Queue()
+    to_query = manager.Queue()
 
     workers_pool = mp.Pool(5, analyze, (to_analyze,))
-
-    dispatcher = mp.Process(target=dispatch, args=(requests, to_analyze, to_query,))
-    dispatcher.start()
+    workers_dispatchers = mp.Pool(3, dispatch, (requests, to_analyze, to_query,))
 
     receiver = mp.Process(target=receive, args=(requests,))
     receiver.start()
-
-    dispatcher.join()
     receiver.join()
