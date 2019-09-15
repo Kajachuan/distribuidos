@@ -35,8 +35,20 @@ def resolve_query(queries):
     while True:
         request, conn = queries.get()
         [id, address, path] = request.split()
-        # Resolver query
-        conn.sendall(('Query resuelta: ' + address).encode())
+        abs_path = '/database/' + address + path + ('' if path[-1] == '/' else '/')
+        files = sorted(os.listdir(abs_path))
+        header = path + ': '
+        total_size = 0
+        inside = ''
+        for filename in files:
+            file = open(abs_path + filename, 'r')
+            size = file.read()
+            file.close()
+            total_size += int(size)
+            inside += '\t' + filename + ': ' + size + 'B\n'
+
+        result = header + str(total_size) + 'B\n' + inside
+        conn.sendall(result.encode())
         conn.close()
 
 def persist(data):

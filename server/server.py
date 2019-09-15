@@ -55,6 +55,7 @@ def dispatch(requests, to_analyze, to_query, database, connections):
             to_analyze.put((id, address, path))
         else:
             database.sendall((id + ' ' + address + ' ' + path).encode())
+            database.recv(BUFF_SIZE).decode()
             response = database.recv(BUFF_SIZE).decode()
             conn = connections.get()
             conn.sendall(response.encode())
