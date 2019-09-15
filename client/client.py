@@ -2,13 +2,15 @@
 
 import sys, getopt, socket
 
+BUFF_SIZE = 8192
+
 def start():
     request = parse_args(sys.argv[1:])
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(('server', 8080))
     client.sendall(request.encode())
 
-    response = client.recv(4096).decode()
+    response = client.recv(BUFF_SIZE).decode()
     print(response)
     client.close()
 
