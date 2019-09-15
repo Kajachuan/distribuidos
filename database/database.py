@@ -41,8 +41,12 @@ def resolve_query(queries):
 def persist(data):
     while True:
         info, conn = data.get()
-        # [address, abs_path, size] = info.split()
-        print('Recibí ' + info)
+
+        dirs = info.split('\n')
+        for i in range(0, len(dirs) - 1):
+            [address, abs_path, size] = dirs[i].split()
+
+            # Guardar archivo
 
 def receive(created_socket, queue):
     conn, address = created_socket.accept()
