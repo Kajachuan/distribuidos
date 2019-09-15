@@ -7,31 +7,10 @@ services:
       - ./server:/server
     depends_on:
       - ftp_server
+      - database
     networks:
       net:
         ipv4_address: 172.28.1.1
-
-  client_analyze:
-    build: client/
-    command: python3 ./client.py -a 172.28.1.3
-    volumes:
-      - ./client:/client
-    depends_on:
-      - server
-    networks:
-      net:
-        ipv4_address: 172.28.1.2
-
-  # client_report:
-  #   build: client/
-  #   command: python3 ./client.py -r sarasa
-  #   volumes:
-  #     - ./client:/client
-  #   depends_on:
-  #     - server
-  #   networks:
-  #     net:
-  #       ipv4_address: 172.28.1.4
 
   ftp_server:
     image: delfer/alpine-ftp-server
@@ -47,11 +26,24 @@ services:
       net:
         ipv4_address: 172.28.1.3
 
-  # database:
-  #   build: database/
-  #   command: python3 ./database.py
-  #   volumes:
-  #     - ./database:/database
+  database:
+    build: database/
+    command: python3 -u ./database.py
+    volumes:
+      - ./database:/database
+    networks:
+      net:
+        ipv4_address: 172.28.1.4
+
+  client:
+    build: client/
+    command: python3 ./client.py -r 172.28.1.3
+    volumes:
+      - ./client:/client
+    depends_on:
+      - server
+    networks:
+      - net
 
 networks:
   net:
