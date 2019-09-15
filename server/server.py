@@ -80,7 +80,7 @@ def analyze(to_analyze, sessions, remaining, database):
         parse_list_and_send(list, to_analyze, path, address, remaining, database)
 
         if remaining[address] == 0:
-            for key, session in sessions[address].items():
+            for key, session in sessions.items():
                 session[0].close()
                 session[1].close()
 
