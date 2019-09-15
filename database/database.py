@@ -57,17 +57,23 @@ def persist(data):
 
         dirs = info.split('\n')
         for i in range(0, len(dirs) - 1):
-            [address, abs_path, size] = dirs[i].split()
+            [type, address, abs_path, size] = dirs[i].split()
 
-            dirname = '/database/' + address + os.path.dirname(abs_path)
-            filename = dirname + '/' + os.path.basename(abs_path)
+            if type == 'f':
+                dirname = '/database/' + address + os.path.dirname(abs_path)
+                filename = dirname + '/' + os.path.basename(abs_path)
+                if not os.path.exists(dirname):
+                    os.makedirs(dirname)
+                file = open(filename, 'w+')
+            else:
+                dirname = '/database/' + address + abs_path
+                if not os.path.exists(dirname):
+                    os.makedirs(dirname)
+                file = open(dirname + '/.MY_SIZE', 'w+')
 
-            if not os.path.exists(dirname):
-                os.makedirs(dirname)
-
-            file = open(filename, 'w+')
             file.write(size)
             file.close()
+
 
 def receive(created_socket, queue):
     conn, address = created_socket.accept()

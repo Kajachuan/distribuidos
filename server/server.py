@@ -108,9 +108,11 @@ def parse_list_and_send(list, to_analyze, path, address, database):
         if data[0][0] == 'd':
             id = str(uuid.uuid1())
             to_analyze.put((id, address, abs_path))
+            database.sendall(('d ' + address + ' ' + abs_path + ' ' + data[4] + '\n').encode())
         else:
-            database.sendall((address + ' ' + abs_path + ' ' + data[4] + '\n').encode())
-            database.recv(BUFF_SIZE).decode()
+            database.sendall(('f ' + address + ' ' + abs_path + ' ' + data[4] + '\n').encode())
+
+        database.recv(BUFF_SIZE).decode()
 
 if __name__ == '__main__':
     start()
