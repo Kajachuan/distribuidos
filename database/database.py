@@ -63,6 +63,7 @@ def receive(created_socket, queue):
     while True:
         request = conn.recv(BUFF_SIZE).decode()
         queue.put((request, conn))
+        conn.sendall(b'OK')
 
 if __name__ == '__main__':
     start()

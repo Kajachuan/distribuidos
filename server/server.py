@@ -109,6 +109,7 @@ def parse_list_and_send(list, to_analyze, path, address, database):
             to_analyze.put((id, address, abs_path))
         else:
             database.sendall((address + ' ' + abs_path + ' ' + data[4] + '\n').encode())
+            database.recv(BUFF_SIZE).decode()
 
 if __name__ == '__main__':
     start()
