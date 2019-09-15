@@ -2,6 +2,7 @@
 
 import socket
 import multiprocessing as mp
+import os
 
 BUFF_SIZE = 8192
 
@@ -46,7 +47,15 @@ def persist(data):
         for i in range(0, len(dirs) - 1):
             [address, abs_path, size] = dirs[i].split()
 
-            # Guardar archivo
+            dirname = '/database/' + address + os.path.dirname(abs_path)
+            filename = dirname + '/' + os.path.basename(abs_path)
+
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
+
+            file = open(filename, 'w+')
+            file.write(size)
+            file.close()
 
 def receive(created_socket, queue):
     conn, address = created_socket.accept()
