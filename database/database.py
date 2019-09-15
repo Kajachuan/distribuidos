@@ -40,12 +40,24 @@ def resolve_query(queries):
         header = path + ': '
         total_size = 0
         inside = ''
-        for filename in files:
-            file = open(abs_path + filename, 'r')
+        for i in range(0 if path == '/' else 1, len(files)):
+            try:
+                file = open(abs_path + files[i], 'r')
+            except IsADirectoryError:
+                file = open(abs_path + files[i] + '/.MY_SIZE', 'r')
+
             size = file.read()
             file.close()
             total_size += int(size)
-            inside += '\t' + filename + ': ' + size + 'B\n'
+            inside += '\t' + files[i] + ': ' + size + 'B\n'
+
+        if path == '/':
+            total_size += 4096
+        else:
+            file = open(abs_path + '/.MY_SIZE', 'r')
+            size = file.read()
+            file.close()
+            total_size += int(size)
 
         result = header + str(total_size) + 'B\n' + inside
         conn.sendall(result.encode())
