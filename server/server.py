@@ -71,7 +71,6 @@ def analyze(to_analyze, database):
         print(resp)
 
         list = data.recv(BUFF_SIZE).decode()
-        print(list)
         parse_list_and_send(list, to_analyze, path, address, database)
 
         control.sendall(b'QUIT\r\n')
@@ -105,13 +104,11 @@ def parse_list_and_send(list, to_analyze, path, address, database):
     for i in range(0, len(list) - 1):
         data = list[i].split()
         abs_path = '/'.join(['' if path == '/' else path, data[8]])
-
         if data[0][0] == 'd':
             id = str(uuid.uuid1())
             to_analyze.put((id, address, abs_path))
         else:
-            pass
-            # database.sendall((address + ' ' + abs_path + ' ' + data[4]).encode())
+            database.sendall((address + ' ' + abs_path + ' ' + data[4]).encode())
 
 if __name__ == '__main__':
     start()

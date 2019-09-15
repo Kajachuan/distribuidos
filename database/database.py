@@ -18,8 +18,8 @@ def start():
     persist_queue = mp.Queue()
     query_queue = mp.Queue()
 
-    mp.Pool(3, resolve_query, (query_queue,))
-    mp.Pool(3, persist, (persist_queue,))
+    mp.Pool(1, resolve_query, (query_queue,))
+    mp.Pool(1, persist, (persist_queue,))
 
     persistor_receiver = mp.Process(target=receive, args=(workers, persist_queue,))
     resolver_receiver = mp.Process(target=receive, args=(server, query_queue,))
@@ -45,8 +45,9 @@ def persist(data):
         print('Recibí ' + info)
 
 def receive(created_socket, queue):
+    conn, address = created_socket.accept()
+
     while True:
-        conn, address = created_socket.accept()
         request = conn.recv(BUFF_SIZE).decode()
         queue.put((request, conn))
 
