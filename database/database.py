@@ -14,29 +14,41 @@ def start():
     workers.bind(('database', 8082))
     workers.listen(5) # Workers
 
-    persistor = mp.Process(target=persist, args=(workers,))
-    resolver = mp.Process(target=resolve_query, args=(server,))
+    manager = mp.Manager()
+    persist_queue = mp.Queue()
+    query_queue = mp.Queue()
 
-    persistor.start()
-    resolver.start()
+    mp.Pool(3, resolve_query, (query_queue,))
+    mp.Pool(3, persist, (persist_queue,))
 
-    persistor.join()
-    resolver.join()
+    persistor_receiver = mp.Process(target=receive, args=(workers, persist_queue,))
+    resolver_receiver = mp.Process(target=receive, args=(server, query_queue,))
 
-def resolve_query(workers):
+    persistor_receiver.start()
+    resolver_receiver.start()
+
+    persistor_receiver.join()
+    resolver_receiver.join()
+
+def resolve_query(queries):
     while True:
-        conn, address = workers.accept()
-
-        request = conn.recv(BUFF_SIZE).decode()
+        request, conn = queries.get()
         [id, address, path] = request.split()
         # Resolver query
         conn.sendall(('Query resuelta: ' + address).encode())
         conn.close()
 
-def persist(server):
+def persist(data):
     while True:
-        conn, address = server.accept()
-        conn.close()
+        info, conn = data.get()
+        # [address, abs_path, size] = info.split()
+        print('Recibí ' + info)
+
+def receive(created_socket, queue):
+    while True:
+        conn, address = created_socket.accept()
+        request = conn.recv(BUFF_SIZE).decode()
+        queue.put((request, conn))
 
 if __name__ == '__main__':
     start()

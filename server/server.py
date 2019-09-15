@@ -117,7 +117,7 @@ def parse_list_and_send(list, to_analyze, path, address, remaining, database):
             to_analyze.put((id, address, abs_path))
         else:
             pass
-            # Enviar a database (abs_path, data[4])
+            # database.sendall((address + ' ' + abs_path + ' ' + data[4]).encode())
 
 if __name__ == '__main__':
     start()
