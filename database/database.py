@@ -5,15 +5,17 @@ import multiprocessing as mp
 import os
 
 BUFF_SIZE = 8192
+MAX_DISPATCHERS_DEFAULT = 3
+MAX_WORKERS_DEFAULT = 3
 
 def start():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(('database', 8081))
-    server.listen(3) # Dispatchers
+    server.listen(int(os.getenv('MAX_DISPATCHERS', MAX_DISPATCHERS_DEFAULT))) # Dispatchers
 
     workers = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     workers.bind(('database', 8082))
-    workers.listen(5) # Workers
+    workers.listen(int(os.getenv('MAX_WORKERS', MAX_WORKERS_DEFAULT))) # Workers
 
     manager = mp.Manager()
     persist_queue = mp.Queue()
@@ -36,30 +38,37 @@ def resolve_query(queries):
         request, conn = queries.get()
         [id, address, path] = request.split()
         abs_path = '/database/' + address + path + ('' if path[-1] == '/' else '/')
-        files = sorted(os.listdir(abs_path))
-        header = path + ': '
-        total_size = 0
-        inside = ''
-        for i in range(0 if path == '/' else 1, len(files)):
-            try:
-                file = open(abs_path + files[i], 'r')
-            except IsADirectoryError:
-                file = open(abs_path + files[i] + '/.MY_SIZE', 'r')
+        try:
+            files = sorted(os.listdir(abs_path))
 
-            size = file.read()
-            file.close()
-            total_size += int(size)
-            inside += '\t' + files[i] + ': ' + size + 'B\n'
+            header = path + ': '
+            total_size = 0
+            inside = ''
 
-        if path == '/':
-            total_size += 4096
-        else:
-            file = open(abs_path + '/.MY_SIZE', 'r')
-            size = file.read()
-            file.close()
-            total_size += int(size)
+            for i in range(0 if path == '/' else 1, len(files)):
+                try:
+                    file = open(abs_path + files[i], 'r')
+                except IsADirectoryError:
+                    file = open(abs_path + files[i] + '/.MY_SIZE', 'r')
 
-        result = header + str(total_size) + 'B\n' + inside
+                size = file.read()
+                file.close()
+                total_size += int(size)
+                inside += '\t' + files[i] + ': ' + size + 'B\n'
+
+            if path == '/':
+                total_size += 4096
+            else:
+                file = open(abs_path + '/.MY_SIZE', 'r')
+                size = file.read()
+                file.close()
+                total_size += int(size)
+
+            result = header + str(total_size) + 'B\n' + inside
+
+        except FileNotFoundError:
+            result = 'Destination does not exist'
+
         conn.sendall(result.encode())
         conn.close()
 

@@ -3,13 +3,17 @@
 import socket
 import multiprocessing as mp
 import uuid
+import os
 
 BUFF_SIZE = 8192
+MAX_CLIENTS_DEFAULT = 5
+WORKERS_NUMBER_DEFAULT = 3
+DISPATCHERS_NUMBER_DEFAULT = 3
 
 def start():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(('server', 8080))
-    server.listen(5) # Max Clients
+    server.listen(int(os.getenv('MAX_CLIENTS', MAX_CLIENTS_DEFAULT))) # Max Clients
 
     db_dispatcher = socket.create_connection(('database', 8081))
     db_workers = socket.create_connection(('database', 8082))
@@ -20,8 +24,10 @@ def start():
     to_query = manager.Queue()
     connections = manager.Queue()
 
-    workers_pool = mp.Pool(1, analyze, (to_analyze, db_workers,))
-    dispatchers_pool = mp.Pool(1, dispatch, (requests, to_analyze, to_query, db_dispatcher, connections,))
+    workers_pool = mp.Pool(int(os.getenv('WORKERS_NUMBER', WORKERS_NUMBER_DEFAULT)),
+                            analyze, (to_analyze, db_workers,))
+    dispatchers_pool = mp.Pool(int(os.getenv('DISPATCHERS_NUMBER', DISPATCHERS_NUMBER_DEFAULT)),
+                            dispatch, (requests, to_analyze, to_query, db_dispatcher, connections,))
 
     receiver = mp.Process(target=receive, args=(requests, server, connections,))
     receiver.start()

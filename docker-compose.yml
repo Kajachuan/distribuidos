@@ -8,6 +8,8 @@ services:
     depends_on:
       - ftp_server
       - database
+    environment:
+      MAX_CLIENTS: 5
     networks:
       net:
         ipv4_address: 172.28.1.1
