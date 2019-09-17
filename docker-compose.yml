@@ -6,7 +6,6 @@ services:
     volumes:
       - ./server:/server
     depends_on:
-      - ftp_server
       - database
     environment:
       MAX_CLIENTS: 5
@@ -27,8 +26,7 @@ services:
       ADDRESS: '172.28.1.3'
       USERS: 'username|mypass'
     networks:
-      net:
-        ipv4_address: 172.28.1.3
+      - net
 
   database:
     build: database/
@@ -46,7 +44,7 @@ services:
 
   client:
     build: client/
-    # command: python3 ./client.py -r 172.28.1.3 -p /dev
+    command: python3 ./client.py -r 172.28.1.3 -p /dev
     volumes:
       - ./client:/client
     depends_on:

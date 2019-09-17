@@ -69,7 +69,7 @@ def resolve_query(queries):
             result = header + str(total_size) + 'B\n' + inside
 
         except FileNotFoundError:
-            result = 'Destination does not exist'
+            result = 'Report of' + address + ' does not exist'
 
         conn.sendall(result.encode())
         conn.close()
