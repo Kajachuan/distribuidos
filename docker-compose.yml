@@ -2,7 +2,7 @@ version: '3'
 services:
   server:
     build: server/
-    command: python3 -u ./server.py
+    command: python3 ./server.py
     volumes:
       - ./server:/server
     depends_on:
@@ -10,6 +10,8 @@ services:
       - database
     environment:
       MAX_CLIENTS: 5
+      WORKERS_NUMBER: 2
+      DISPATCHERS_NUMBER: 2
     networks:
       net:
         ipv4_address: 172.28.1.1
@@ -30,16 +32,21 @@ services:
 
   database:
     build: database/
-    command: python3 -u ./database.py
+    command: python3 ./database.py
     volumes:
       - ./database:/database
+    environment:
+      MAX_DISPATCHERS: 3
+      MAX_WORKERS: 3
+      RESOLVERS_NUMBER: 3
+      PERSISTORS_NUMBER: 3
     networks:
       net:
         ipv4_address: 172.28.1.4
 
   client:
     build: client/
-    command: python3 ./client.py -r 172.28.1.3 -p /dev
+    # command: python3 ./client.py -r 172.28.1.3 -p /dev
     volumes:
       - ./client:/client
     depends_on:

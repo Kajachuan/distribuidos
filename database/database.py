@@ -7,6 +7,8 @@ import os
 BUFF_SIZE = 8192
 MAX_DISPATCHERS_DEFAULT = 3
 MAX_WORKERS_DEFAULT = 3
+RESOLVERS_NUMBER_DEFAULT = 3
+PERSISTORS_NUMBER_DEFAULT = 3
 
 def start():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -21,8 +23,8 @@ def start():
     persist_queue = mp.Queue()
     query_queue = mp.Queue()
 
-    mp.Pool(1, resolve_query, (query_queue,))
-    mp.Pool(1, persist, (persist_queue,))
+    mp.Pool(int(os.getenv('RESOLVERS_NUMBER', RESOLVERS_NUMBER_DEFAULT)), resolve_query, (query_queue,))
+    mp.Pool(int(os.getenv('PERSISTORS_NUMBER', PERSISTORS_NUMBER_DEFAULT)), persist, (persist_queue,))
 
     persistor_receiver = mp.Process(target=receive, args=(workers, persist_queue,))
     resolver_receiver = mp.Process(target=receive, args=(server, query_queue,))
