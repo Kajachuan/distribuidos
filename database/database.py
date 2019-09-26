@@ -3,108 +3,50 @@
 import socket
 import multiprocessing as mp
 import os
+from persistor import PersistorPool
+from resolver import ResolverPool
 
 BUFF_SIZE = 8192
-MAX_DISPATCHERS_DEFAULT = 3
-MAX_WORKERS_DEFAULT = 3
+MAX_RESPONSORS_DEFAULT = 3
+MAX_ANALYZERS_DEFAULT = 3
 RESOLVERS_NUMBER_DEFAULT = 3
 PERSISTORS_NUMBER_DEFAULT = 3
 
-def start():
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('database', 8081))
-    server.listen(int(os.getenv('MAX_DISPATCHERS', MAX_DISPATCHERS_DEFAULT))) # Dispatchers
+class Database:
+    def __init__(self):
+        self.responsor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.responsor.bind(('database', 8081))
+        self.responsor.listen(int(os.getenv('MAX_RESPONSORS', MAX_RESPONSORS_DEFAULT)))
 
-    workers = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    workers.bind(('database', 8082))
-    workers.listen(int(os.getenv('MAX_WORKERS', MAX_WORKERS_DEFAULT))) # Workers
+        self.analyzer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.analyzer.bind(('database', 8082))
+        self.analyzer.listen(int(os.getenv('MAX_ANALYZERS', MAX_ANALYZERS_DEFAULT)))
 
-    manager = mp.Manager()
-    persist_queue = mp.Queue()
-    query_queue = mp.Queue()
+        manager = mp.Manager()
+        self.persist_queue = manager.Queue()
+        self.query_queue = manager.Queue()
 
-    mp.Pool(int(os.getenv('RESOLVERS_NUMBER', RESOLVERS_NUMBER_DEFAULT)), resolve_query, (query_queue,))
-    mp.Pool(int(os.getenv('PERSISTORS_NUMBER', PERSISTORS_NUMBER_DEFAULT)), persist, (persist_queue,))
+    def run(self):
+        resolvers = ResolverPool(int(os.getenv('RESOLVERS_NUMBER', RESOLVERS_NUMBER_DEFAULT)), self.query_queue)
+        persistors = PersistorPool(int(os.getenv('PERSISTORS_NUMBER', PERSISTORS_NUMBER_DEFAULT)), self.persist_queue)
 
-    persistor_receiver = mp.Process(target=receive, args=(workers, persist_queue,))
-    resolver_receiver = mp.Process(target=receive, args=(server, query_queue,))
+        persistor_receiver = mp.Process(target=self.receive, args=(self.analyzer, self.persist_queue,))
+        resolver_receiver = mp.Process(target=self.receive, args=(self.responsor, self.query_queue,))
 
-    persistor_receiver.start()
-    resolver_receiver.start()
+        persistor_receiver.start()
+        resolver_receiver.start()
 
-    persistor_receiver.join()
-    resolver_receiver.join()
+        persistor_receiver.join()
+        resolver_receiver.join()
 
-def resolve_query(queries):
-    while True:
-        request, conn = queries.get()
-        [address, path] = request.split()
-        abs_path = '/database/' + address + path + ('' if path[-1] == '/' else '/')
-        try:
-            files = sorted(os.listdir(abs_path))
+    def receive(self, created_socket, queue):
+        conn, address = created_socket.accept()
 
-            header = path + ': '
-            total_size = 0
-            inside = ''
-
-            for i in range(0 if path == '/' else 1, len(files)):
-                try:
-                    file = open(abs_path + files[i], 'r')
-                except IsADirectoryError:
-                    file = open(abs_path + files[i] + '/.MY_SIZE', 'r')
-
-                size = file.read()
-                file.close()
-                total_size += int(size)
-                inside += '\t' + files[i] + ': ' + size + 'B\n'
-
-            if path == '/':
-                total_size += 4096
-            else:
-                file = open(abs_path + '/.MY_SIZE', 'r')
-                size = file.read()
-                file.close()
-                total_size += int(size)
-
-            result = header + str(total_size) + 'B\n' + inside
-
-        except FileNotFoundError:
-            result = 'Report of' + address + ' does not exist'
-
-        conn.sendall(result.encode())
-        conn.close()
-
-def persist(data):
-    while True:
-        info, conn = data.get()
-
-        dirs = info.split('\n')
-        for i in range(0, len(dirs) - 1):
-            [type, address, abs_path, size] = dirs[i].split()
-
-            if type == 'f':
-                dirname = '/database/' + address + os.path.dirname(abs_path)
-                filename = dirname + '/' + os.path.basename(abs_path)
-                if not os.path.exists(dirname):
-                    os.makedirs(dirname)
-                file = open(filename, 'w+')
-            else:
-                dirname = '/database/' + address + abs_path
-                if not os.path.exists(dirname):
-                    os.makedirs(dirname)
-                file = open(dirname + '/.MY_SIZE', 'w+')
-
-            file.write(size)
-            file.close()
-
-
-def receive(created_socket, queue):
-    conn, address = created_socket.accept()
-
-    while True:
-        request = conn.recv(BUFF_SIZE).decode()
-        queue.put((request, conn))
-        conn.sendall(b'OK')
+        while True:
+            request = conn.recv(BUFF_SIZE).decode()
+            queue.put((request, conn))
+            conn.sendall(b'OK')
 
 if __name__ == '__main__':
-    start()
+    db = Database()
+    db.run()

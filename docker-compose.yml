@@ -9,7 +9,7 @@ services:
       - database
     environment:
       MAX_CLIENTS: 5
-      WORKERS_NUMBER: 2
+      ANALYZERS_NUMBER: 2
       RESPONSORS_NUMBER: 2
       DISPATCHERS_NUMBER: 2
     networks:
@@ -37,8 +37,8 @@ services:
     volumes:
       - ./database:/database
     environment:
-      MAX_DISPATCHERS: 3
-      MAX_WORKERS: 3
+      MAX_RESPONSORS: 3
+      MAX_ANALYZERS: 3
       RESOLVERS_NUMBER: 3
       PERSISTORS_NUMBER: 3
     networks:

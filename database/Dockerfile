@@ -1,5 +1,5 @@
 FROM python:latest
 
-ADD database.py /database/
+ADD *.py /database/
 
 WORKDIR /database/

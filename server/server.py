@@ -9,7 +9,7 @@ from dispatcher import DispatcherPool
 
 BUFF_SIZE = 8192
 MAX_CLIENTS_DEFAULT = 5
-WORKERS_NUMBER_DEFAULT = 3
+ANALYZERS_NUMBER_DEFAULT = 3
 RESPONSORS_NUMBER_DEFAULT = 3
 DISPATCHERS_NUMBER_DEFAULT = 3
 
@@ -28,7 +28,7 @@ class Server:
         self.to_query = manager.Queue()
 
     def run(self):
-        analyzers = AnalyzerPool(int(os.getenv('WORKERS_NUMBER', WORKERS_NUMBER_DEFAULT)),
+        analyzers = AnalyzerPool(int(os.getenv('ANALYZERS_NUMBER', ANALYZERS_NUMBER_DEFAULT)),
                                  self.to_analyze, self.db_analyzers)
 
         responsors = ResponsorPool(int(os.getenv('RESPONSORS_NUMBER', RESPONSORS_NUMBER_DEFAULT)),
