@@ -2,7 +2,6 @@
 
 import socket
 import multiprocessing as mp
-import uuid
 
 BUFF_SIZE = 8192
 
@@ -14,7 +13,7 @@ class AnalyzerPool:
 
     def run(self):
         while True:
-            id, address, path = self.queue.get()
+            address, path = self.queue.get()
 
             control, data = self.connect_to_ftp_server(address)
 
@@ -57,8 +56,7 @@ class AnalyzerPool:
             data = list[i].split()
             abs_path = '/'.join(['' if path == '/' else path, data[8]])
             if data[0][0] == 'd':
-                id = str(uuid.uuid1())
-                self.queue.put((id, address, abs_path))
+                self.queue.put((address, abs_path))
                 self.db_conn.sendall(('d ' + address + ' ' + abs_path + ' ' + data[4] + '\n').encode())
             else:
                 self.db_conn.sendall(('f ' + address + ' ' + abs_path + ' ' + data[4] + '\n').encode())

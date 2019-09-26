@@ -14,7 +14,7 @@ class Client:
 
         response = conn.recv(BUFF_SIZE).decode()
         print(response)
-        if response.split()[0] == 'report':
+        if 'report' in self.request:
             response = conn.recv(BUFF_SIZE).decode()
             print(response)
         conn.close()

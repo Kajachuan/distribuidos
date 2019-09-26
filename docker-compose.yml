@@ -10,6 +10,7 @@ services:
     environment:
       MAX_CLIENTS: 5
       WORKERS_NUMBER: 2
+      RESPONSORS_NUMBER: 2
       DISPATCHERS_NUMBER: 2
     networks:
       net:

@@ -38,7 +38,7 @@ def start():
 def resolve_query(queries):
     while True:
         request, conn = queries.get()
-        [id, address, path] = request.split()
+        [address, path] = request.split()
         abs_path = '/database/' + address + path + ('' if path[-1] == '/' else '/')
         try:
             files = sorted(os.listdir(abs_path))
