@@ -1,5 +1,5 @@
 FROM python:latest
 
-ADD server.py /server/
+ADD *.py /server/
 
 WORKDIR /server/

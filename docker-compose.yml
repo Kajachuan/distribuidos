@@ -2,7 +2,7 @@ version: '3'
 services:
   server:
     build: server/
-    command: python3 ./server.py
+    command: python3 -u ./server.py
     volumes:
       - ./server:/server
     depends_on:

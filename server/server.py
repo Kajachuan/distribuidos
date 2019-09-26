@@ -4,34 +4,38 @@ import socket
 import multiprocessing as mp
 import uuid
 import os
+from analyzer import AnalyzerPool
 
 BUFF_SIZE = 8192
 MAX_CLIENTS_DEFAULT = 5
 WORKERS_NUMBER_DEFAULT = 3
 DISPATCHERS_NUMBER_DEFAULT = 3
 
-def start():
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('server', 8080))
-    server.listen(int(os.getenv('MAX_CLIENTS', MAX_CLIENTS_DEFAULT))) # Max Clients
+class Server:
+    def __init__(self):
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.bind(('server', 8080))
+        self.server.listen(int(os.getenv('MAX_CLIENTS', MAX_CLIENTS_DEFAULT)))
 
-    db_dispatcher = socket.create_connection(('database', 8081))
-    db_workers = socket.create_connection(('database', 8082))
+        self.db_dispatcher = socket.create_connection(('database', 8081))
+        self.db_workers = socket.create_connection(('database', 8082))
 
-    manager = mp.Manager()
-    requests = manager.Queue()
-    to_analyze = manager.Queue()
-    to_query = manager.Queue()
-    connections = manager.Queue()
+        manager = mp.Manager()
+        self.requests = manager.Queue()
+        self.to_analyze = manager.Queue()
+        self.to_query = manager.Queue()
+        self.connections = manager.Queue()
 
-    workers_pool = mp.Pool(int(os.getenv('WORKERS_NUMBER', WORKERS_NUMBER_DEFAULT)),
-                            analyze, (to_analyze, db_workers,))
-    dispatchers_pool = mp.Pool(int(os.getenv('DISPATCHERS_NUMBER', DISPATCHERS_NUMBER_DEFAULT)),
-                            dispatch, (requests, to_analyze, to_query, db_dispatcher, connections,))
+    def run(self):
+        analyzers = AnalyzerPool(int(os.getenv('WORKERS_NUMBER', WORKERS_NUMBER_DEFAULT)),
+                                 self.to_analyze, self.db_workers)
 
-    receiver = mp.Process(target=receive, args=(requests, server, connections,))
-    receiver.start()
-    receiver.join()
+        mp.Pool(int(os.getenv('DISPATCHERS_NUMBER', DISPATCHERS_NUMBER_DEFAULT)),
+                dispatch, (self.requests, self.to_analyze, self.to_query, self.db_dispatcher, self.connections,))
+
+        receiver = mp.Process(target=receive, args=(self.requests, self.server, self.connections,))
+        receiver.start()
+        receiver.join()
 
 def receive(requests, server, connections):
     while True:
@@ -67,58 +71,6 @@ def dispatch(requests, to_analyze, to_query, database, connections):
             conn.sendall(response.encode())
             conn.close()
 
-def analyze(to_analyze, database):
-    while True:
-        id, address, path = to_analyze.get()
-
-        control, data = connect_to_server(address)
-
-        control.sendall(('LIST ' + path + '\r\n').encode())
-        resp = control.recv(BUFF_SIZE).decode()
-        print(resp)
-
-        list = data.recv(BUFF_SIZE).decode()
-        parse_list_and_send(list, to_analyze, path, address, database)
-
-        control.sendall(b'QUIT\r\n')
-        resp = control.recv(BUFF_SIZE).decode()
-        print(resp)
-        control.close()
-        data.close()
-
-def connect_to_server(address):
-    control = socket.create_connection((address, 21))
-    resp = control.recv(BUFF_SIZE).decode()
-    print(resp)
-    control.sendall(b'USER username\r\n')
-    resp = control.recv(BUFF_SIZE).decode()
-    print(resp)
-    control.sendall(b'PASS mypass\r\n')
-    resp = control.recv(BUFF_SIZE).decode()
-    print(resp)
-    control.sendall(b'PASV\r\n')
-    resp = control.recv(BUFF_SIZE).decode()
-    print(resp)
-    info = resp.split('(')[1].split(')')[0].split(',')
-    port = int(info[4]) * 256 + int(info[5])
-
-    data = socket.create_connection((address, port))
-
-    return control, data
-
-def parse_list_and_send(list, to_analyze, path, address, database):
-    list = list.split('\n')
-    for i in range(0, len(list) - 1):
-        data = list[i].split()
-        abs_path = '/'.join(['' if path == '/' else path, data[8]])
-        if data[0][0] == 'd':
-            id = str(uuid.uuid1())
-            to_analyze.put((id, address, abs_path))
-            database.sendall(('d ' + address + ' ' + abs_path + ' ' + data[4] + '\n').encode())
-        else:
-            database.sendall(('f ' + address + ' ' + abs_path + ' ' + data[4] + '\n').encode())
-
-        database.recv(BUFF_SIZE).decode()
-
 if __name__ == '__main__':
-    start()
+    server = Server()
+    server.run()
