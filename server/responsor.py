@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
+import socket
 import multiprocessing as mp
 
 BUFF_SIZE = 8192
 
 class ResponsorPool:
-    def __init__(self, processes, queue, db_conn):
+    def __init__(self, processes, queue):
         self.queue = queue
-        self.db_conn = db_conn
+        self.db_conn = socket.create_connection(('database', 8081))
         mp.Pool(processes, self.run)
 
     def run(self):

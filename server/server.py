@@ -19,20 +19,15 @@ class Server:
         self.server.bind(('server', 8080))
         self.server.listen(int(os.getenv('MAX_CLIENTS', MAX_CLIENTS_DEFAULT)))
 
-        self.db_responsors = socket.create_connection(('database', 8081))
-        self.db_analyzers = socket.create_connection(('database', 8082))
-
         manager = mp.Manager()
         self.requests = manager.Queue()
         self.to_analyze = manager.Queue()
         self.to_query = manager.Queue()
 
     def run(self):
-        analyzers = AnalyzerPool(int(os.getenv('ANALYZERS_NUMBER', ANALYZERS_NUMBER_DEFAULT)),
-                                 self.to_analyze, self.db_analyzers)
+        analyzers = AnalyzerPool(int(os.getenv('ANALYZERS_NUMBER', ANALYZERS_NUMBER_DEFAULT)), self.to_analyze)
 
-        responsors = ResponsorPool(int(os.getenv('RESPONSORS_NUMBER', RESPONSORS_NUMBER_DEFAULT)),
-                                   self.to_query, self.db_responsors)
+        responsors = ResponsorPool(int(os.getenv('RESPONSORS_NUMBER', RESPONSORS_NUMBER_DEFAULT)), self.to_query)
 
         dispatchers = DispatcherPool(int(os.getenv('DISPATCHERS_NUMBER', DISPATCHERS_NUMBER_DEFAULT)),
                                      self.requests, self.to_analyze, self.to_query)
