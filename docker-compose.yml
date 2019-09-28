@@ -9,9 +9,9 @@ services:
       - database
     environment:
       MAX_CLIENTS: 5
-      ANALYZERS_NUMBER: 2
-      RESPONSORS_NUMBER: 2
-      DISPATCHERS_NUMBER: 2
+      ANALYZERS_NUMBER: 4
+      RESPONSORS_NUMBER: 4
+      DISPATCHERS_NUMBER: 4
     networks:
       net:
         ipv4_address: 172.28.1.1
@@ -33,14 +33,14 @@ services:
 
   database:
     build: database/
-    command: python3 ./database.py
+    command: python3 -u ./database.py
     volumes:
       - ./database:/database
     environment:
-      MAX_RESPONSORS: 3
-      MAX_ANALYZERS: 3
-      RESOLVERS_NUMBER: 3
-      PERSISTORS_NUMBER: 3
+      MAX_RESPONSORS: 4
+      MAX_ANALYZERS: 4
+      RESOLVERS_NUMBER: 4
+      PERSISTORS_NUMBER: 4
     networks:
       net:
         ipv4_address: 172.28.1.4

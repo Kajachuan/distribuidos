@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import multiprocessing as mp
+import fcntl
 import os
 
 class PersistorPool:
@@ -17,16 +18,52 @@ class PersistorPool:
                 [type, address, abs_path, size] = dirs[i].split()
 
                 if type == 'f':
-                    dirname = '/database/' + address + os.path.dirname(abs_path)
-                    filename = dirname + '/' + os.path.basename(abs_path)
-                    if not os.path.exists(dirname):
-                        os.makedirs(dirname)
-                    file = open(filename, 'w+')
-                else:
-                    dirname = '/database/' + address + abs_path
-                    if not os.path.exists(dirname):
-                        os.makedirs(dirname)
-                    file = open(dirname + '/.MY_SIZE', 'w+')
+                    self.persist_file(address, abs_path, size)
 
+                self.update_sizes(address, abs_path, size, type)
+
+    def update_sizes(self, address, path, size, type):
+        if type == 'f':
+            dir = os.path.dirname(path)
+        else:
+            dir = path
+
+        while True:
+            dirname = '/database/' + address + dir + ('' if dir == '/' else '/')
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
+
+            filename = dirname + '.MY_SIZE'
+            if not os.path.exists(filename):
+                file = open(filename, 'w+')
+                fcntl.lockf(file, fcntl.LOCK_EX)
                 file.write(size)
+                fcntl.lockf(file, fcntl.LOCK_UN)
                 file.close()
+            else:
+                file = open(filename, 'r')
+                fcntl.lockf(file, fcntl.LOCK_SH)
+                dir_size = int(file.read())
+                fcntl.lockf(file, fcntl.LOCK_UN)
+                file.close()
+
+                file = open(filename, 'w')
+                fcntl.lockf(file, fcntl.LOCK_EX)
+                file.write(str(dir_size + int(size)))
+                fcntl.lockf(file, fcntl.LOCK_UN)
+                file.close()
+
+            if dir == '/':
+                return
+            dir = os.path.dirname(dir)
+
+    def persist_file(self, address, path, size):
+        dirname = '/database/' + address + os.path.dirname(path)
+        filename = dirname + '/' + os.path.basename(path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        file = open(filename, 'w+')
+        fcntl.lockf(file, fcntl.LOCK_EX)
+        file.write(size)
+        fcntl.lockf(file, fcntl.LOCK_UN)
+        file.close()

@@ -16,11 +16,12 @@ class ResolverPool:
             try:
                 files = sorted(os.listdir(abs_path))
 
-                header = path + ': '
-                total_size = 0
-                inside = ''
+                result = path + ': '
+                file = open(abs_path + '/.MY_SIZE', 'r')
+                size = file.read()
+                result += size + 'B\n'
 
-                for i in range(0 if path == '/' else 1, len(files)):
+                for i in range(1, len(files)):
                     try:
                         file = open(abs_path + files[i], 'r')
                     except IsADirectoryError:
@@ -28,18 +29,7 @@ class ResolverPool:
 
                     size = file.read()
                     file.close()
-                    total_size += int(size)
-                    inside += '\t' + files[i] + ': ' + size + 'B\n'
-
-                if path == '/':
-                    total_size += 4096
-                else:
-                    file = open(abs_path + '/.MY_SIZE', 'r')
-                    size = file.read()
-                    file.close()
-                    total_size += int(size)
-
-                result = header + str(total_size) + 'B\n' + inside
+                    result += '\t' + files[i] + ': ' + size + 'B\n'
 
             except FileNotFoundError:
                 result = 'Report of' + address + ' does not exist'
