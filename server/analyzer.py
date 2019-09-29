@@ -2,6 +2,7 @@
 
 import socket
 import multiprocessing as mp
+from ftp_client import FTPClient
 
 BUFF_SIZE = 8192
 
@@ -16,40 +17,12 @@ class AnalyzerPool:
         while True:
             address, path = self.queue.get()
 
-            control, data = self.connect_to_ftp_server(address)
-
-            control.sendall(('LIST ' + path + '\r\n').encode())
-            resp = control.recv(BUFF_SIZE).decode()
-            print(resp)
-
-            list = data.recv(BUFF_SIZE).decode()
+            conn = FTPClient(address)
+            conn.login('username', 'mypass')
+            conn.create_data_connection()
+            list = conn.list(path)
+            conn.quit()
             self.parse_list_and_send(list, path, address)
-
-            control.sendall(b'QUIT\r\n')
-            resp = control.recv(BUFF_SIZE).decode()
-            print(resp)
-            control.close()
-            data.close()
-
-    def connect_to_ftp_server(self, address):
-        control = socket.create_connection((address, 21))
-        resp = control.recv(BUFF_SIZE).decode()
-        print(resp)
-        control.sendall(b'USER username\r\n')
-        resp = control.recv(BUFF_SIZE).decode()
-        print(resp)
-        control.sendall(b'PASS mypass\r\n')
-        resp = control.recv(BUFF_SIZE).decode()
-        print(resp)
-        control.sendall(b'PASV\r\n')
-        resp = control.recv(BUFF_SIZE).decode()
-        print(resp)
-        info = resp.split('(')[1].split(')')[0].split(',')
-        port = int(info[4]) * 256 + int(info[5])
-
-        data = socket.create_connection((address, port))
-
-        return control, data
 
     def parse_list_and_send(self, list, path, address):
         self.remaining[address] = self.remaining.get(address, 1) - 1
