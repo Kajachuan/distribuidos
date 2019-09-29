@@ -7,6 +7,7 @@ import os
 class PersistorPool:
     def __init__(self, processes, queue):
         self.queue = queue
+        self.lock = mp.Manager().Lock()
         mp.Pool(processes, self.run)
 
     def run(self):
@@ -34,6 +35,7 @@ class PersistorPool:
                 os.makedirs(dirname)
 
             filename = dirname + '.MY_SIZE'
+            self.lock.acquire()
             if not os.path.exists(filename):
                 file = open(filename, 'w+')
                 fcntl.lockf(file, fcntl.LOCK_EX)
@@ -52,6 +54,7 @@ class PersistorPool:
                 file.write(str(dir_size + int(size)))
                 fcntl.lockf(file, fcntl.LOCK_UN)
                 file.close()
+            self.lock.release()
 
             if dir == '/':
                 return

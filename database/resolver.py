@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import multiprocessing as mp
+import fcntl
 import os
 
 class ResolverPool:
@@ -18,7 +19,10 @@ class ResolverPool:
 
                 result = path + ': '
                 file = open(abs_path + '/.MY_SIZE', 'r')
+                fcntl.lockf(file, fcntl.LOCK_SH)
                 size = file.read()
+                fcntl.lockf(file, fcntl.LOCK_UN)
+                file.close()
                 result += size + 'B\n'
 
                 for i in range(1, len(files)):
@@ -27,7 +31,9 @@ class ResolverPool:
                     except IsADirectoryError:
                         file = open(abs_path + files[i] + '/.MY_SIZE', 'r')
 
+                    fcntl.lockf(file, fcntl.LOCK_SH)
                     size = file.read()
+                    fcntl.lockf(file, fcntl.LOCK_UN)
                     file.close()
                     result += '\t' + files[i] + ': ' + size + 'B\n'
 
