@@ -17,6 +17,9 @@ class AnalyzerPool:
         while True:
             address, path = self.queue.get()
 
+            if path == '/' and address in self.remaining:
+                continue
+
             conn = FTPClient(address)
             conn.login('username', 'mypass')
             conn.create_data_connection()

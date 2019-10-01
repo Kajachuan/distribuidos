@@ -38,7 +38,7 @@ class ResolverPool:
                     result += '\t' + files[i] + ': ' + size + 'B\n'
 
             except FileNotFoundError:
-                result = 'Report of' + address + ' does not exist'
+                result = 'Report of ' + address + ' does not exist'
 
             conn.sendall(result.encode())
             conn.close()
