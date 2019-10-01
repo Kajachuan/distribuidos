@@ -17,7 +17,15 @@ class ResolverPool:
             try:
                 files = sorted(os.listdir(abs_path))
 
-                result = path + ': '
+                result = 'Status: '
+                status = 0
+                if not os.path.exists('/database/' + address + '/.FINISH'):
+                    result += 'In Progress\n'
+                else:
+                    status = 1
+                    result += 'Finished\n'
+
+                result += path + ': '
                 file = open(abs_path + '/.MY_SIZE', 'r')
                 fcntl.lockf(file, fcntl.LOCK_SH)
                 size = file.read()
@@ -25,7 +33,7 @@ class ResolverPool:
                 file.close()
                 result += size + 'B\n'
 
-                for i in range(1, len(files)):
+                for i in range(1 + status if path == '/' else 1, len(files)):
                     try:
                         file = open(abs_path + files[i], 'r')
                     except IsADirectoryError:
