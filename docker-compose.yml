@@ -27,9 +27,7 @@ services:
       ADDRESS: '172.28.1.3'
       USERS: 'username|mypass'
     networks:
-      # - net
-      net:
-        ipv4_address: 172.28.1.3
+      - net
 
   database:
     build: database/
