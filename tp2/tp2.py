@@ -20,23 +20,25 @@ def main():
                                 None, None, None, None, tourney_date])
 
     # Join
+    players = {}
     with open('./data/atp_players.csv', 'r') as file:
         file.readline()
         for line in iter(file.readline, ''):
             data = line.split(',')
+            players[data[0]] = data[1:5]
 
-            for match in matches:
-                for i in range(2):
-                    if match[i] == data[0]:
-                        match[i + 4] = data[1] + ' ' + data[2] # Name
-                        match[i + 6] = data[3] # Hand
-                        if data[4] == '':
-                            birthdate = datetime.today()
-                        else:
-                            birthdate = datetime.strptime(data[4], '%Y%m%d')
+    for match in matches:
+        for i in range(2):
+            data = players[match[i]]
+            match[i + 4] = data[0] + ' ' + data[1] # Name
+            match[i + 6] = data[2] # Hand
+            if data[3] == '':
+                birthdate = datetime.today()
+            else:
+                birthdate = datetime.strptime(data[3], '%Y%m%d')
 
-                        age = compute_age(birthdate, datetime.strptime(match[-1], '%Y%m%d'))
-                        match[i + 8] = age
+            age = compute_age(birthdate, datetime.strptime(match[-1], '%Y%m%d'))
+            match[i + 8] = age
 
     # Tiempo promedio
     times = {'Clay': [0,0], 'Hard': [0,0], 'Grass': [0,0], 'Carpet':[0,0]}
@@ -58,9 +60,9 @@ def main():
     for match in matches:
         w_hand = match[6]
         l_hand = match[7]
-        if w_hand == 'R' and l_hand == 'L':
+        if w_hand == 'R' and l_hand != w_hand:
             r_wins += 1
-        elif w_hand == 'L' and l_hand == 'R':
+        elif (w_hand == 'L' or w_hand == 'U') and l_hand != w_hand:
             l_wins += 1
 
     print("R Victories: " + str(100 * r_wins / (r_wins + l_wins)) + "%")
@@ -72,7 +74,7 @@ def main():
         l_age = match[9]
         if w_age <= 0 or l_age <= 0:
             continue
-        if w_age - l_age >= 5:
+        if w_age - l_age >= 20:
             print("{}\t{}\t{}\t{}".format(w_age, match[4], l_age, match[5]))
 
 
