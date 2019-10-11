@@ -6,7 +6,7 @@ from datetime import datetime
 def main():
     # Concatenación
     matches = []
-    for filename in glob.glob('./data/atp_matches_*.csv'):
+    for filename in glob.glob('./client/data/atp_matches_*.csv'):
         with open(filename, 'r') as file:
             file.readline()
             for line in iter(file.readline, ''):
@@ -21,7 +21,7 @@ def main():
 
     # Join
     players = {}
-    with open('./data/atp_players.csv', 'r') as file:
+    with open('./client/data/atp_players.csv', 'r') as file:
         file.readline()
         for line in iter(file.readline, ''):
             data = line.split(',')
