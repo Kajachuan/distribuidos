@@ -2,6 +2,6 @@ FROM python:3.7-alpine
 
 RUN pip install pika
 
-COPY *.py /server/
+COPY . /accumulator/
 
-WORKDIR /server/
+WORKDIR /accumulator/

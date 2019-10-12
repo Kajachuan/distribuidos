@@ -19,11 +19,7 @@ class Client:
                 file.readline()
                 for line in iter(file.readline, ''):
                     self.channel.basic_publish(exchange='', routing_key='lines', body=line)
-                    logging.debug('Sent: %s' % line)
-
-    def __del__(self):
-        self.connection.close()
-        logging.info('Connection closed')
+                    logging.info('Sent: %s' % line)
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',

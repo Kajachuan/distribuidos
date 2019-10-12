@@ -10,11 +10,22 @@ services:
       timeout: 15s
       retries: 10
 
-  server:
-    build: server
-    command: python3 -u ./server.py
+  surface_dispatcher:
+    build: surface_dispatcher
+    command: python3 -u ./surface_dispatcher.py
     volumes:
-      - ./server:/server
+      - ./surface_dispatcher:/surface_dispatcher
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
+  hard_accumulator:
+    build: accumulator
+    environment:
+      ROUTING_KEY: Hard
+    command: python3 -u ./accumulator.py
+    volumes:
+      - ./accumulator:/accumulator
     depends_on:
       - rabbitmq
     restart: on-failure
