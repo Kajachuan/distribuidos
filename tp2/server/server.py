@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 
 import pika
+import logging
+from surface_dispatcher import SurfaceDispatcher
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
-channel = connection.channel()
+class Server:
+    def __init__(self):
+        surface = SurfaceDispatcher()
+        surface.run()
 
-channel.queue_declare(queue='lines')
-
-def callback(ch, method, properties, body):
-    print("Received: %r" % body)
-
-channel.basic_consume(queue='lines', auto_ack=True, on_message_callback=callback)
-
-channel.start_consuming()
+if __name__ == '__main__':
+    logging.basicConfig(format='%(asctime)s %(message)s',
+                        datefmt='%m/%d/%Y %H:%M:%S',
+                        level=logging.INFO)
+    server = Server()

@@ -16,9 +16,10 @@ class Client:
     def run(self):
         for filename in glob('./data/atp_matches_*.csv'):
             with open(filename, 'r') as file:
+                file.readline()
                 for line in iter(file.readline, ''):
                     self.channel.basic_publish(exchange='', routing_key='lines', body=line)
-                    logging.debug('Sent "%s"' % line)
+                    logging.debug('Sent: %s' % line)
 
     def __del__(self):
         self.connection.close()
