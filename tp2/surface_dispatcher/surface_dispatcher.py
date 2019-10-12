@@ -3,6 +3,8 @@
 import pika
 import logging
 
+SURFACES = ['Hard', 'Clay', 'Carpet', 'Grass']
+
 class SurfaceDispatcher:
     def __init__(self):
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
@@ -11,23 +13,27 @@ class SurfaceDispatcher:
         logging.info('Queue "lines" created')
 
         self.channel.exchange_declare(exchange='surfaces', exchange_type='direct')
-        self.channel.basic_consume(queue='lines', auto_ack=True, on_message_callback=self.dispatch)
+        self.tag = self.channel.basic_consume(queue='lines', auto_ack=True, on_message_callback=self.dispatch)
 
         self.channel.start_consuming()
 
     def dispatch(self, ch, method, properties, body):
-        logging.info('Received: %r' % body)
-        data = str(body).split(',')
-        if data[9] == '':
-            logging.info('No minutes to send')
+        logging.info('Received %r' % body)
+        if body == b'EOF':
+            for surface in SURFACES:
+                self.channel.basic_publish(exchange='surfaces', routing_key=surface, body='END')
+            self.channel.basic_cancel(self.tag)
             return
 
+        data = body.decode().split(',')
         surface = data[3]
         minutes = data[9]
+
+        if minutes == '' or surface in ('', 'None'):
+            return
+
         self.channel.basic_publish(exchange='surfaces', routing_key=surface, body=minutes)
-        logging.info('Sent %s to %s accumulator' % (minutes, surface))
-        self.channel.basic_publish(exchange='surfaces', routing_key='Total' + surface, body='1')
-        logging.info('Sent 1 to Total%s accumulator' % surface)
+        logging.info('Sent %s minutes to %s accumulator' % (minutes, surface))
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',

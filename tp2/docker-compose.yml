@@ -30,13 +30,33 @@ services:
       - rabbitmq
     restart: on-failure
 
-  total_hard_accumulator:
+  clay_accumulator:
     build: accumulator
     environment:
-      ROUTING_KEY: TotalHard
+      ROUTING_KEY: Clay
     command: python3 -u ./accumulator.py
     volumes:
       - ./accumulator:/accumulator
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
+  grass_carpet_accumulator:
+    build: accumulator
+    environment:
+      ROUTING_KEY: Grass-Carpet
+    command: python3 -u ./accumulator.py
+    volumes:
+      - ./accumulator:/accumulator
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
+  average_calculator:
+    build: average_calculator
+    command: python3 -u ./average_calculator.py
+    volumes:
+      - ./average_calculator:/average_calculator
     depends_on:
       - rabbitmq
     restart: on-failure

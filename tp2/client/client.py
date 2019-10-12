@@ -21,6 +21,8 @@ class Client:
                     self.channel.basic_publish(exchange='', routing_key='lines', body=line)
                     logging.info('Sent: %s' % line)
 
+        self.channel.basic_publish(exchange='', routing_key='lines', body='EOF')
+
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
