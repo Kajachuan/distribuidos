@@ -30,6 +30,17 @@ services:
       - rabbitmq
     restart: on-failure
 
+  total_hard_accumulator:
+    build: accumulator
+    environment:
+      ROUTING_KEY: TotalHard
+    command: python3 -u ./accumulator.py
+    volumes:
+      - ./accumulator:/accumulator
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
   client:
     build: client
     command: python3 -u ./client.py

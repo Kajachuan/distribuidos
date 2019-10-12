@@ -18,10 +18,16 @@ class SurfaceDispatcher:
     def dispatch(self, ch, method, properties, body):
         logging.info('Received: %r' % body)
         data = str(body).split(',')
+        if data[9] == '':
+            logging.info('No minutes to send')
+            return
+
         surface = data[3]
-        minutes = '0' if data[9] == '' else data[9]
+        minutes = data[9]
         self.channel.basic_publish(exchange='surfaces', routing_key=surface, body=minutes)
         logging.info('Sent %s to %s accumulator' % (minutes, surface))
+        self.channel.basic_publish(exchange='surfaces', routing_key='Total' + surface, body='1')
+        logging.info('Sent 1 to Total%s accumulator' % surface)
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',
