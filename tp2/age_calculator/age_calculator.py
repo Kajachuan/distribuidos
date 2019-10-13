@@ -14,6 +14,8 @@ class AgeCalculator:
         queue_name = result.method.queue
         self.channel.queue_bind(exchange='joined', queue=queue_name)
 
+        self.channel.exchange_declare(exchange='age', exchange_type='direct')
+
         self.channel.basic_consume(queue=queue_name, auto_ack=True, on_message_callback=self.calculate)
         self.channel.start_consuming()
 
@@ -31,7 +33,9 @@ class AgeCalculator:
         loser_age = self._compute_age(datetime.strptime(loser_birthdate, '%Y%m%d'), tourney_date)
         data[4] = str(winner_age)
         data[8] = str(loser_age)
-        logging.info('Sent %s' % str(data)) #
+        body = ','.join(data)
+        self.channel.basic_publish(exchange='age', routing_key='', body=body)
+        logging.info('Sent %s' % body)
 
     def _compute_age(self, birthdate, tourney_date):
         years = tourney_date.year - birthdate.year

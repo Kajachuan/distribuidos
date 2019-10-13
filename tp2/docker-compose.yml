@@ -79,6 +79,15 @@ services:
       - rabbitmq
     restart: on-failure
 
+  age_difference_filter:
+    build: age_difference_filter
+    command: python3 -u ./age_difference_filter.py
+    volumes:
+      - ./age_difference_filter:/age_difference_filter
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
   client:
     build: client
     command: python3 -u ./client.py
