@@ -3,6 +3,8 @@
 import pika
 import logging
 
+HANDS = ['R', 'L', 'U']
+
 class DifferentHandsFilter:
     def __init__(self):
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
@@ -20,10 +22,16 @@ class DifferentHandsFilter:
 
     def filter(self, ch, method, properties, body):
         logging.info('Received %r' % body)
+        if body == b'END':
+            for hand in HANDS:
+                self.channel.basic_publish(exchange='hands', routing_key=hand, body='END')
+            self.channel.basic_cancel(self.tag)
+            return
+
         data = body.decode().split(',')
         winner_hand = data[3]
         loser_hand = data[7]
-        if winner_hand in ('R', 'L', 'U') and loser_hand != winner_hand:
+        if winner_hand in HANDS and loser_hand != winner_hand:
             self.channel.basic_publish(exchange='hands', routing_key=winner_hand, body='1')
             logging.info('Sent 1 to %s accumulator' % winner_hand)
 

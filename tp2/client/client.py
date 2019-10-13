@@ -22,7 +22,7 @@ class Client:
                     self.channel.basic_publish(exchange='lines', routing_key='', body=line)
                     logging.info('Sent %s' % line)
 
-        self.channel.basic_publish(exchange='lines', routing_key='', body='EOF')
+        self.channel.basic_publish(exchange='lines', routing_key='', body='END')
 
 if __name__ == '__main__':
     time.sleep(20) # Revisar esto

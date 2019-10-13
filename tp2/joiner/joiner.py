@@ -28,7 +28,8 @@ class Joiner:
 
     def join(self, ch, method, properties, body):
         logging.info('Received %r' % body)
-        if body == b'EOF':
+        if body == b'END':
+            self.channel.basic_publish(exchange='joined', routing_key='', body='END')
             self.channel.basic_cancel(self.tag)
             return
 

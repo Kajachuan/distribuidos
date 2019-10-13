@@ -108,7 +108,7 @@ services:
     environment:
       ROUTING_KEY: R
       EXCHANGE: hands
-      OUTPUT_QUEUE: unknown # Cambiar
+      OUTPUT_QUEUE: hands_values
     command: python3 -u ./accumulator.py
     volumes:
       - ./accumulator:/accumulator
@@ -121,10 +121,19 @@ services:
     environment:
       ROUTING_KEY: L-U
       EXCHANGE: hands
-      OUTPUT_QUEUE: unknown # Cambiar
+      OUTPUT_QUEUE: hands_values
     command: python3 -u ./accumulator.py
     volumes:
       - ./accumulator:/accumulator
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
+  percentage_calculator:
+    build: percentage_calculator
+    command: python3 -u ./percentage_calculator.py
+    volumes:
+      - ./percentage_calculator:/percentage_calculator
     depends_on:
       - rabbitmq
     restart: on-failure

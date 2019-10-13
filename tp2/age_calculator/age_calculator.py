@@ -21,6 +21,10 @@ class AgeCalculator:
 
     def calculate(self, ch, method, properties, body):
         logging.info('Received %r' % body)
+        if body == b'END':
+            self.channel.basic_cancel(self.tag)
+            return
+            
         data = body.decode().split(',')
         tourney_date = data[0]
         winner_birthdate = data[4]

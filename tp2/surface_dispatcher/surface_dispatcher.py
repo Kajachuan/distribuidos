@@ -22,7 +22,7 @@ class SurfaceDispatcher:
 
     def dispatch(self, ch, method, properties, body):
         logging.info('Received %r' % body)
-        if body == b'EOF':
+        if body == b'END':
             for surface in SURFACES:
                 self.channel.basic_publish(exchange='surfaces', routing_key=surface, body='END')
             self.channel.basic_cancel(self.tag)
