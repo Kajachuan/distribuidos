@@ -20,7 +20,7 @@ class Client:
                 file.readline()
                 for line in iter(file.readline, ''):
                     self.channel.basic_publish(exchange='lines', routing_key='', body=line)
-                    logging.info('Sent: %s' % line)
+                    logging.info('Sent %s' % line)
 
         self.channel.basic_publish(exchange='lines', routing_key='', body='EOF')
 

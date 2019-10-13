@@ -21,6 +21,8 @@ class Joiner:
         queue_name = result.method.queue
         self.channel.queue_bind(exchange='lines', queue=queue_name)
 
+        self.channel.exchange_declare(exchange='joined', exchange_type='fanout')
+
         self.tag = self.channel.basic_consume(queue=queue_name, auto_ack=True, on_message_callback=self.join)
         self.channel.start_consuming()
 
@@ -34,7 +36,9 @@ class Joiner:
         winner_id = data[4]
         loser_id = data[5]
         data = [data[2]] + self.players[winner_id] + self.players[loser_id]
-        logging.debug('Data joined: %s' % str(data))
+        body = ','.join(data)
+        self.channel.basic_publish(exchange='joined', routing_key='', body=body)
+        logging.info('Sent %s' % body)
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',
