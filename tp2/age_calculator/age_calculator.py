@@ -16,7 +16,7 @@ class AgeCalculator:
 
         self.channel.exchange_declare(exchange='age', exchange_type='direct')
 
-        self.channel.basic_consume(queue=queue_name, auto_ack=True, on_message_callback=self.calculate)
+        self.tag = self.channel.basic_consume(queue=queue_name, auto_ack=True, on_message_callback=self.calculate)
         self.channel.start_consuming()
 
     def calculate(self, ch, method, properties, body):
@@ -24,7 +24,7 @@ class AgeCalculator:
         if body == b'END':
             self.channel.basic_cancel(self.tag)
             return
-            
+
         data = body.decode().split(',')
         tourney_date = data[0]
         winner_birthdate = data[4]
