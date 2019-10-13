@@ -21,7 +21,8 @@ class Joiner:
         queue_name = result.method.queue
         self.channel.queue_bind(exchange='lines', queue=queue_name)
 
-        self.channel.exchange_declare(exchange='joined', exchange_type='fanout')
+        self.channel.queue_declare(queue='joined_hands', durable=True)
+        self.channel.queue_declare(queue='joined_age', durable=True)
 
         self.tag = self.channel.basic_consume(queue=queue_name, auto_ack=True, on_message_callback=self.join)
         self.channel.start_consuming()
@@ -29,7 +30,8 @@ class Joiner:
     def join(self, ch, method, properties, body):
         logging.info('Received %r' % body)
         if body == b'END':
-            self.channel.basic_publish(exchange='joined', routing_key='', body='END')
+            self.channel.basic_publish(exchange='', routing_key='joined_hands', body='END')
+            self.channel.basic_publish(exchange='', routing_key='joined_age', body='END')
             self.channel.basic_cancel(self.tag)
             return
 
@@ -38,7 +40,8 @@ class Joiner:
         loser_id = data[5]
         data = [data[2]] + self.players[winner_id] + self.players[loser_id]
         body = ','.join(data)
-        self.channel.basic_publish(exchange='joined', routing_key='', body=body)
+        self.channel.basic_publish(exchange='', routing_key='joined_hands', body=body)
+        self.channel.basic_publish(exchange='', routing_key='joined_age', body=body)
         logging.info('Sent %s' % body)
 
 if __name__ == '__main__':

@@ -9,14 +9,11 @@ class AgeCalculator:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         self.channel = connection.channel()
 
-        self.channel.exchange_declare(exchange='joined', exchange_type='fanout')
-        result = self.channel.queue_declare(queue='', exclusive=True)
-        queue_name = result.method.queue
-        self.channel.queue_bind(exchange='joined', queue=queue_name)
+        self.channel.queue_declare(queue='joined_age', durable=True)
 
         self.channel.exchange_declare(exchange='age', exchange_type='direct')
 
-        self.tag = self.channel.basic_consume(queue=queue_name, auto_ack=True, on_message_callback=self.calculate)
+        self.tag = self.channel.basic_consume(queue='joined_age', auto_ack=True, on_message_callback=self.calculate)
         self.channel.start_consuming()
 
     def calculate(self, ch, method, properties, body):

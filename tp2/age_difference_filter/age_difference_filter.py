@@ -24,7 +24,7 @@ class AgeDifferenceFilter:
         if winner_age - loser_age >= 20:
             winner_name = ' '.join([data[1], data[2]])
             loser_name = ' '.join([data[5], data[6]])
-            logging.info('%d\t%s\t%d\t%s' % (winner_age, winner_name, loser_age, loser_name))
+            logging.info('Sent %d\t%s\t%d\t%s' % (winner_age, winner_name, loser_age, loser_name))
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',
