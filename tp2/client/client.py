@@ -3,6 +3,7 @@
 import pika
 import logging
 from glob import glob
+import time
 
 class Client:
     def __init__(self):
@@ -10,7 +11,7 @@ class Client:
         logging.info('Connection created')
 
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue='lines')
+        self.channel.exchange_declare(exchange='lines', exchange_type='fanout')
         logging.info('Queue "lines" created')
 
     def run(self):
@@ -18,12 +19,13 @@ class Client:
             with open(filename, 'r') as file:
                 file.readline()
                 for line in iter(file.readline, ''):
-                    self.channel.basic_publish(exchange='', routing_key='lines', body=line)
+                    self.channel.basic_publish(exchange='lines', routing_key='', body=line)
                     logging.info('Sent: %s' % line)
 
-        self.channel.basic_publish(exchange='', routing_key='lines', body='EOF')
+        self.channel.basic_publish(exchange='lines', routing_key='', body='EOF')
 
 if __name__ == '__main__':
+    time.sleep(20) # Revisar esto
     logging.basicConfig(format='%(asctime)s %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
                         level=logging.INFO)

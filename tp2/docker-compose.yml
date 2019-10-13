@@ -4,11 +4,11 @@ services:
     image: rabbitmq:3.7.14-management
     ports:
       - '15672:15672'
-    healthcheck:
-      test: [ "CMD", "nc", "-z", "localhost", "15672" ]
-      interval: 5s
-      timeout: 15s
-      retries: 10
+    # healthcheck:
+    #   test: [ "CMD", "nc", "-z", "localhost", "15672" ]
+    #   interval: 5s
+    #   timeout: 15s
+    #   retries: 10
 
   surface_dispatcher:
     build: surface_dispatcher
@@ -57,6 +57,15 @@ services:
     command: python3 -u ./average_calculator.py
     volumes:
       - ./average_calculator:/average_calculator
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
+  joiner:
+    build: joiner
+    command: python3 -u ./joiner.py
+    volumes:
+      - ./joiner:/joiner
     depends_on:
       - rabbitmq
     restart: on-failure
