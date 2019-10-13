@@ -2,6 +2,6 @@ FROM python:3.7-alpine
 
 RUN pip install pika
 
-COPY . /average_calculator/
+COPY . /age_difference_filter/
 
-WORKDIR /average_calculator/
+WORKDIR /age_difference_filter/

@@ -88,6 +88,15 @@ services:
       - rabbitmq
     restart: on-failure
 
+  different_hands_filter:
+    build: different_hands_filter
+    command: python3 -u ./different_hands_filter.py
+    volumes:
+      - ./different_hands_filter:/different_hands_filter
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
   client:
     build: client
     command: python3 -u ./client.py
