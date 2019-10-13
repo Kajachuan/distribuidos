@@ -13,6 +13,8 @@ class DifferentHandsFilter:
         queue_name = result.method.queue
         self.channel.queue_bind(exchange='joined', queue=queue_name)
 
+        self.channel.exchange_declare(exchange='hands', exchange_type='direct')
+
         self.tag = self.channel.basic_consume(queue=queue_name, auto_ack=True, on_message_callback=self.filter)
         self.channel.start_consuming()
 
@@ -22,8 +24,8 @@ class DifferentHandsFilter:
         winner_hand = data[3]
         loser_hand = data[7]
         if winner_hand in ('R', 'L', 'U') and loser_hand != winner_hand:
-            data = ','.join([winner_hand, loser_hand])
-            logging.info('Sent %s' % data)
+            self.channel.basic_publish(exchange='hands', routing_key=winner_hand, body='1')
+            logging.info('Sent 1 to %s accumulator' % winner_hand)
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',

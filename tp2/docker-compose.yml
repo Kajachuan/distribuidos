@@ -23,6 +23,8 @@ services:
   #   build: accumulator
   #   environment:
   #     ROUTING_KEY: Hard
+  #     EXCHANGE: surfaces
+  #     OUTPUT_QUEUE: surface_values
   #   command: python3 -u ./accumulator.py
   #   volumes:
   #     - ./accumulator:/accumulator
@@ -34,6 +36,8 @@ services:
   #   build: accumulator
   #   environment:
   #     ROUTING_KEY: Clay
+  #     EXCHANGE: surfaces
+  #     OUTPUT_QUEUE: surface_values
   #   command: python3 -u ./accumulator.py
   #   volumes:
   #     - ./accumulator:/accumulator
@@ -45,6 +49,8 @@ services:
   #   build: accumulator
   #   environment:
   #     ROUTING_KEY: Grass-Carpet
+  #     EXCHANGE: surfaces
+  #     OUTPUT_QUEUE: surface_values
   #   command: python3 -u ./accumulator.py
   #   volumes:
   #     - ./accumulator:/accumulator
@@ -70,29 +76,55 @@ services:
       - rabbitmq
     restart: on-failure
 
-  age_calculator:
-    build: age_calculator
-    command: python3 -u ./age_calculator.py
-    volumes:
-      - ./age_calculator:/age_calculator
-    depends_on:
-      - rabbitmq
-    restart: on-failure
-
-  age_difference_filter:
-    build: age_difference_filter
-    command: python3 -u ./age_difference_filter.py
-    volumes:
-      - ./age_difference_filter:/age_difference_filter
-    depends_on:
-      - rabbitmq
-    restart: on-failure
+  # age_calculator:
+  #   build: age_calculator
+  #   command: python3 -u ./age_calculator.py
+  #   volumes:
+  #     - ./age_calculator:/age_calculator
+  #   depends_on:
+  #     - rabbitmq
+  #   restart: on-failure
+  #
+  # age_difference_filter:
+  #   build: age_difference_filter
+  #   command: python3 -u ./age_difference_filter.py
+  #   volumes:
+  #     - ./age_difference_filter:/age_difference_filter
+  #   depends_on:
+  #     - rabbitmq
+  #   restart: on-failure
 
   different_hands_filter:
     build: different_hands_filter
     command: python3 -u ./different_hands_filter.py
     volumes:
       - ./different_hands_filter:/different_hands_filter
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
+  right_accumulator:
+    build: accumulator
+    environment:
+      ROUTING_KEY: R
+      EXCHANGE: hands
+      OUTPUT_QUEUE: unknown # Cambiar
+    command: python3 -u ./accumulator.py
+    volumes:
+      - ./accumulator:/accumulator
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
+  left_accumulator:
+    build: accumulator
+    environment:
+      ROUTING_KEY: L-U
+      EXCHANGE: hands
+      OUTPUT_QUEUE: unknown # Cambiar
+    command: python3 -u ./accumulator.py
+    volumes:
+      - ./accumulator:/accumulator
     depends_on:
       - rabbitmq
     restart: on-failure
