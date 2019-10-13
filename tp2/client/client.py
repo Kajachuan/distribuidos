@@ -8,21 +8,26 @@ import time
 class Client:
     def __init__(self):
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
-        logging.info('Connection created')
 
         self.channel = self.connection.channel()
-        self.channel.exchange_declare(exchange='lines', exchange_type='fanout')
-        logging.info('Queue "lines" created')
+        self.channel.queue_declare(queue='lines_join', durable=True)
+        self.channel.queue_declare(queue='lines_surface', durable=True)
 
     def run(self):
         for filename in glob('./data/atp_matches_*.csv'):
             with open(filename, 'r') as file:
                 file.readline()
                 for line in iter(file.readline, ''):
-                    self.channel.basic_publish(exchange='lines', routing_key='', body=line)
+                    self.channel.basic_publish(exchange='', routing_key='lines_join', body=line,
+                                               properties=pika.BasicProperties(delivery_mode=2,))
+                    self.channel.basic_publish(exchange='', routing_key='lines_surface', body=line,
+                                               properties=pika.BasicProperties(delivery_mode=2,))
                     logging.info('Sent %s' % line)
 
-        self.channel.basic_publish(exchange='lines', routing_key='', body='END')
+        self.channel.basic_publish(exchange='', routing_key='lines_join', body='END',
+                                   properties=pika.BasicProperties(delivery_mode=2,))
+        self.channel.basic_publish(exchange='', routing_key='lines_surface', body='END',
+                                   properties=pika.BasicProperties(delivery_mode=2,))
 
 if __name__ == '__main__':
     time.sleep(20) # Revisar esto

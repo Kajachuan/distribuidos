@@ -16,15 +16,12 @@ class Joiner:
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         self.channel = self.connection.channel()
 
-        self.channel.exchange_declare(exchange='lines', exchange_type='fanout')
-        result = self.channel.queue_declare(queue='', exclusive=True)
-        queue_name = result.method.queue
-        self.channel.queue_bind(exchange='lines', queue=queue_name)
+        self.channel.queue_declare(queue='lines_join', durable=True)
 
         self.channel.queue_declare(queue='joined_hands', durable=True)
         self.channel.queue_declare(queue='joined_age', durable=True)
 
-        self.tag = self.channel.basic_consume(queue=queue_name, auto_ack=True, on_message_callback=self.join)
+        self.tag = self.channel.basic_consume(queue='lines_join', auto_ack=True, on_message_callback=self.join)
         self.channel.start_consuming()
 
     def join(self, ch, method, properties, body):
