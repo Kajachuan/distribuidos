@@ -10,8 +10,7 @@ class AgeCalculator:
         self.channel = connection.channel()
 
         self.channel.queue_declare(queue='joined_age', durable=True)
-
-        self.channel.exchange_declare(exchange='age', exchange_type='direct')
+        self.channel.queue_declare(queue='age', durable=True)
 
         self.tag = self.channel.basic_consume(queue='joined_age', auto_ack=True, on_message_callback=self.calculate)
         self.channel.start_consuming()
@@ -35,7 +34,8 @@ class AgeCalculator:
         data[4] = str(winner_age)
         data[8] = str(loser_age)
         body = ','.join(data)
-        self.channel.basic_publish(exchange='age', routing_key='', body=body)
+        self.channel.basic_publish(exchange='', routing_key='age', body=body,
+                                   properties=pika.BasicProperties(delivery_mode=2,))
         logging.info('Sent %s' % body)
 
     def _compute_age(self, birthdate, tourney_date):

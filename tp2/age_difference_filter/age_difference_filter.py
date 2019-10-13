@@ -8,12 +8,9 @@ class AgeDifferenceFilter:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         self.channel = connection.channel()
 
-        self.channel.exchange_declare(exchange='age', exchange_type='direct')
-        result = self.channel.queue_declare(queue='', exclusive=True)
-        queue_name = result.method.queue
-        self.channel.queue_bind(exchange='age', queue=queue_name, routing_key='')
-        self.tag = self.channel.basic_consume(queue=queue_name, auto_ack=True, on_message_callback=self.filter)
+        self.channel.queue_declare(queue='age', durable=True)
 
+        self.tag = self.channel.basic_consume(queue='age', auto_ack=True, on_message_callback=self.filter)
         self.channel.start_consuming()
 
     def filter(self, ch, method, properties, body):

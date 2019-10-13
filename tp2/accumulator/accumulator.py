@@ -13,7 +13,7 @@ class Accumulator:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         self.channel = connection.channel()
 
-        self.channel.queue_declare(queue=output_queue)
+        self.channel.queue_declare(queue=output_queue, durable=True)
 
         self.channel.exchange_declare(exchange=exchange, exchange_type='direct')
         result = self.channel.queue_declare(queue='', exclusive=True)
@@ -26,9 +26,11 @@ class Accumulator:
 
     def add(self, ch, method, properties, body):
         if body == b'END':
+            body = ','.join([self.routing_key, str(self.amount), str(self.total)])
             self.channel.basic_publish(exchange='',
                                        routing_key=self.output_queue,
-                                       body=','.join([self.routing_key, str(self.amount), str(self.total)]))
+                                       body=body,
+                                       properties=pika.BasicProperties(delivery_mode=2,))
             self.channel.basic_cancel(self.tag)
             return
 

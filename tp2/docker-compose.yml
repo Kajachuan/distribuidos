@@ -10,14 +10,14 @@ services:
     #   timeout: 15s
     #   retries: 10
 
-  surface_dispatcher:
-    build: surface_dispatcher
-    command: python3 -u ./surface_dispatcher.py
-    volumes:
-      - ./surface_dispatcher:/surface_dispatcher
-    depends_on:
-      - rabbitmq
-    restart: on-failure
+  # surface_dispatcher:
+  #   build: surface_dispatcher
+  #   command: python3 -u ./surface_dispatcher.py
+  #   volumes:
+  #     - ./surface_dispatcher:/surface_dispatcher
+  #   depends_on:
+  #     - rabbitmq
+  #   restart: on-failure
   #
   # hard_accumulator:
   #   build: accumulator
@@ -76,23 +76,23 @@ services:
       - rabbitmq
     restart: on-failure
 
-  # age_calculator:
-  #   build: age_calculator
-  #   command: python3 -u ./age_calculator.py
-  #   volumes:
-  #     - ./age_calculator:/age_calculator
-  #   depends_on:
-  #     - rabbitmq
-  #   restart: on-failure
-  #
-  # age_difference_filter:
-  #   build: age_difference_filter
-  #   command: python3 -u ./age_difference_filter.py
-  #   volumes:
-  #     - ./age_difference_filter:/age_difference_filter
-  #   depends_on:
-  #     - rabbitmq
-  #   restart: on-failure
+  age_calculator:
+    build: age_calculator
+    command: python3 -u ./age_calculator.py
+    volumes:
+      - ./age_calculator:/age_calculator
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+  
+  age_difference_filter:
+    build: age_difference_filter
+    command: python3 -u ./age_difference_filter.py
+    volumes:
+      - ./age_difference_filter:/age_difference_filter
+    depends_on:
+      - rabbitmq
+    restart: on-failure
 
   # different_hands_filter:
   #   build: different_hands_filter
