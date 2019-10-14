@@ -12,6 +12,7 @@ class Client:
         self.channel = self.connection.channel()
         self.channel.queue_declare(queue='lines_join', durable=True)
         self.channel.queue_declare(queue='lines_surface', durable=True)
+        self.channel.queue_declare(queue='response', durable=True)
 
     def run(self):
         for filename in glob('./data/atp_matches_2017.csv'): # Cambiar 2017 por * despues
@@ -28,6 +29,12 @@ class Client:
                                    properties=pika.BasicProperties(delivery_mode=2,))
         self.channel.basic_publish(exchange='', routing_key='lines_surface', body='END',
                                    properties=pika.BasicProperties(delivery_mode=2,))
+
+        self.channel.basic_consume(queue='response', auto_ack=True, on_message_callback=self.print_response)
+        self.channel.start_consuming()
+
+    def print_response(self, ch, method, properties, body):
+        print(body.decode())
 
 if __name__ == '__main__':
     time.sleep(20) # Revisar esto

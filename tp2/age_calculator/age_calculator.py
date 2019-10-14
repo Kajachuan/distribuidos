@@ -18,6 +18,8 @@ class AgeCalculator:
     def calculate(self, ch, method, properties, body):
         logging.info('Received %r' % body)
         if body == b'END':
+            self.channel.basic_publish(exchange='', routing_key='age', body='END',
+                                       properties=pika.BasicProperties(delivery_mode=2,))
             self.channel.basic_cancel(self.tag)
             return
 
