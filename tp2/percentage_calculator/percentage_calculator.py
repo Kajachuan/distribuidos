@@ -9,7 +9,7 @@ class PercentageCalculator:
         self.right = None
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         self.channel = connection.channel()
-        self.channel.queue_declare(queue='hands_values')
+        self.channel.queue_declare(queue='hands_values', durable=True)
 
         self.channel.basic_consume(queue='hands_values', auto_ack=True, on_message_callback=self.calculate)
         self.channel.start_consuming()

@@ -4,68 +4,68 @@ services:
     image: rabbitmq:3.7.14-management
     ports:
       - '15672:15672'
-    # healthcheck:
-    #   test: [ "CMD", "nc", "-z", "localhost", "15672" ]
-    #   interval: 5s
-    #   timeout: 15s
-    #   retries: 10
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "15672" ]
+      interval: 5s
+      timeout: 15s
+      retries: 10
 
-  # surface_dispatcher:
-  #   build: surface_dispatcher
-  #   command: python3 -u ./surface_dispatcher.py
-  #   volumes:
-  #     - ./surface_dispatcher:/surface_dispatcher
-  #   depends_on:
-  #     - rabbitmq
-  #   restart: on-failure
-  #
-  # hard_accumulator:
-  #   build: accumulator
-  #   environment:
-  #     ROUTING_KEY: Hard
-  #     EXCHANGE: surfaces
-  #     OUTPUT_QUEUE: surface_values
-  #   command: python3 -u ./accumulator.py
-  #   volumes:
-  #     - ./accumulator:/accumulator
-  #   depends_on:
-  #     - rabbitmq
-  #   restart: on-failure
-  #
-  # clay_accumulator:
-  #   build: accumulator
-  #   environment:
-  #     ROUTING_KEY: Clay
-  #     EXCHANGE: surfaces
-  #     OUTPUT_QUEUE: surface_values
-  #   command: python3 -u ./accumulator.py
-  #   volumes:
-  #     - ./accumulator:/accumulator
-  #   depends_on:
-  #     - rabbitmq
-  #   restart: on-failure
-  #
-  # grass_carpet_accumulator:
-  #   build: accumulator
-  #   environment:
-  #     ROUTING_KEY: Grass-Carpet
-  #     EXCHANGE: surfaces
-  #     OUTPUT_QUEUE: surface_values
-  #   command: python3 -u ./accumulator.py
-  #   volumes:
-  #     - ./accumulator:/accumulator
-  #   depends_on:
-  #     - rabbitmq
-  #   restart: on-failure
-  #
-  # average_calculator:
-  #   build: average_calculator
-  #   command: python3 -u ./average_calculator.py
-  #   volumes:
-  #     - ./average_calculator:/average_calculator
-  #   depends_on:
-  #     - rabbitmq
-  #   restart: on-failure
+  surface_dispatcher:
+    build: surface_dispatcher
+    command: python3 -u ./surface_dispatcher.py
+    volumes:
+      - ./surface_dispatcher:/surface_dispatcher
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
+  hard_accumulator:
+    build: accumulator
+    environment:
+      ROUTING_KEY: Hard
+      EXCHANGE: surfaces
+      OUTPUT_QUEUE: surface_values
+    command: python3 -u ./accumulator.py
+    volumes:
+      - ./accumulator:/accumulator
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
+  clay_accumulator:
+    build: accumulator
+    environment:
+      ROUTING_KEY: Clay
+      EXCHANGE: surfaces
+      OUTPUT_QUEUE: surface_values
+    command: python3 -u ./accumulator.py
+    volumes:
+      - ./accumulator:/accumulator
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
+  grass_carpet_accumulator:
+    build: accumulator
+    environment:
+      ROUTING_KEY: Grass-Carpet
+      EXCHANGE: surfaces
+      OUTPUT_QUEUE: surface_values
+    command: python3 -u ./accumulator.py
+    volumes:
+      - ./accumulator:/accumulator
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
+  average_calculator:
+    build: average_calculator
+    command: python3 -u ./average_calculator.py
+    volumes:
+      - ./average_calculator:/average_calculator
+    depends_on:
+      - rabbitmq
+    restart: on-failure
 
   joiner:
     build: joiner
@@ -84,7 +84,7 @@ services:
     depends_on:
       - rabbitmq
     restart: on-failure
-  
+
   age_difference_filter:
     build: age_difference_filter
     command: python3 -u ./age_difference_filter.py
@@ -94,49 +94,49 @@ services:
       - rabbitmq
     restart: on-failure
 
-  # different_hands_filter:
-  #   build: different_hands_filter
-  #   command: python3 -u ./different_hands_filter.py
-  #   volumes:
-  #     - ./different_hands_filter:/different_hands_filter
-  #   depends_on:
-  #     - rabbitmq
-  #   restart: on-failure
-  #
-  # right_accumulator:
-  #   build: accumulator
-  #   environment:
-  #     ROUTING_KEY: R
-  #     EXCHANGE: hands
-  #     OUTPUT_QUEUE: hands_values
-  #   command: python3 -u ./accumulator.py
-  #   volumes:
-  #     - ./accumulator:/accumulator
-  #   depends_on:
-  #     - rabbitmq
-  #   restart: on-failure
-  #
-  # left_accumulator:
-  #   build: accumulator
-  #   environment:
-  #     ROUTING_KEY: L-U
-  #     EXCHANGE: hands
-  #     OUTPUT_QUEUE: hands_values
-  #   command: python3 -u ./accumulator.py
-  #   volumes:
-  #     - ./accumulator:/accumulator
-  #   depends_on:
-  #     - rabbitmq
-  #   restart: on-failure
-  #
-  # percentage_calculator:
-  #   build: percentage_calculator
-  #   command: python3 -u ./percentage_calculator.py
-  #   volumes:
-  #     - ./percentage_calculator:/percentage_calculator
-  #   depends_on:
-  #     - rabbitmq
-  #   restart: on-failure
+  different_hands_filter:
+    build: different_hands_filter
+    command: python3 -u ./different_hands_filter.py
+    volumes:
+      - ./different_hands_filter:/different_hands_filter
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
+  right_accumulator:
+    build: accumulator
+    environment:
+      ROUTING_KEY: R
+      EXCHANGE: hands
+      OUTPUT_QUEUE: hands_values
+    command: python3 -u ./accumulator.py
+    volumes:
+      - ./accumulator:/accumulator
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
+  left_accumulator:
+    build: accumulator
+    environment:
+      ROUTING_KEY: L-U
+      EXCHANGE: hands
+      OUTPUT_QUEUE: hands_values
+    command: python3 -u ./accumulator.py
+    volumes:
+      - ./accumulator:/accumulator
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+
+  percentage_calculator:
+    build: percentage_calculator
+    command: python3 -u ./percentage_calculator.py
+    volumes:
+      - ./percentage_calculator:/percentage_calculator
+    depends_on:
+      - rabbitmq
+    restart: on-failure
 
   client:
     build: client

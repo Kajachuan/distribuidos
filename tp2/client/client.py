@@ -14,7 +14,7 @@ class Client:
         self.channel.queue_declare(queue='lines_surface', durable=True)
 
     def run(self):
-        for filename in glob('./data/atp_matches_*.csv'):
+        for filename in glob('./data/atp_matches_2017.csv'): # Cambiar 2017 por * despues
             with open(filename, 'r') as file:
                 file.readline()
                 for line in iter(file.readline, ''):
