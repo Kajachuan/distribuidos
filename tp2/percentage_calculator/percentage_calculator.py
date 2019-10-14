@@ -24,9 +24,10 @@ class PercentageCalculator:
             if self.left is None:
                 return
 
-        self.left = float(amount)
-        if self.right is None:
-            return
+        if hand == 'L-U':
+            self.left = float(amount)
+            if self.right is None:
+                return
 
         right_percentage = 100 * self.right / (self.left + self.right)
         left_percentage = 100 - right_percentage
