@@ -3,7 +3,6 @@
 import pika
 import logging
 from glob import glob
-import time
 
 class Client:
     def __init__(self):
@@ -15,7 +14,7 @@ class Client:
         self.channel.queue_declare(queue='response', durable=True)
 
     def run(self):
-        for filename in glob('./data/atp_matches_2017.csv'): # Cambiar 2017 por * despues
+        for filename in glob('./data/atp_matches_*.csv'): # Cambiar 2017 por * despues
             with open(filename, 'r') as file:
                 file.readline()
                 for line in iter(file.readline, ''):
@@ -37,7 +36,6 @@ class Client:
         print(body.decode())
 
 if __name__ == '__main__':
-    time.sleep(20) # Revisar esto
     logging.basicConfig(format='%(asctime)s %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
                         level=logging.INFO)

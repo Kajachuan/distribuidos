@@ -3,7 +3,6 @@
 import pika
 import logging
 from glob import glob
-import time
 
 class Joiner:
     def __init__(self):
@@ -47,7 +46,6 @@ class Joiner:
         logging.info('Sent %s' % body)
 
 if __name__ == '__main__':
-    time.sleep(20)
     logging.basicConfig(format='%(asctime)s %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
                         level=logging.INFO)
