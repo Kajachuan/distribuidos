@@ -146,12 +146,12 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+    depends_on:
+      - joiner
 
   database:
     build: database
     command: python3 -u ./database.py
-    volumes:
-      - ./database:/database
     depends_on:
       rabbitmq:
         condition: service_healthy

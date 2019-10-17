@@ -7,22 +7,34 @@ from glob import glob
 class Joiner:
     def __init__(self):
         self.players = {}
-        with open('./data/atp_players.csv', 'r') as file:
-            file.readline()
-            for line in iter(file.readline, ''):
-                data = line.split(',')
-                self.players[data[0]] = data[1:5]
 
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         self.channel = self.connection.channel()
 
-        self.channel.queue_declare(queue='lines_join', durable=True)
-
+        self.channel.queue_declare(queue='matches_join', durable=True)
         self.channel.queue_declare(queue='joined_hands', durable=True)
         self.channel.queue_declare(queue='joined_age', durable=True)
 
-        self.tag = self.channel.basic_consume(queue='lines_join', auto_ack=True, on_message_callback=self.join)
+        self.channel.exchange_declare(exchange='players', exchange_type='fanout')
+
+        result = self.channel.queue_declare(queue='', exclusive=True, durable=True)
+        queue_name = result.method.queue
+        self.channel.queue_bind(exchange='players', queue=queue_name)
+
+        self.tag = self.channel.basic_consume(queue=queue_name, auto_ack=True, on_message_callback=self.save_player)
         self.channel.start_consuming()
+
+        self.tag = self.channel.basic_consume(queue='matches_join', auto_ack=True, on_message_callback=self.join)
+        self.channel.start_consuming()
+
+    def save_player(self, ch, method, properties, body):
+        logging.info('Received %r' % body)
+        if body == b'END':
+            self.channel.basic_cancel(self.tag)
+            return
+
+        data = body.decode().split(',')
+        self.players[data[0]] = data[1:5]
 
     def join(self, ch, method, properties, body):
         logging.info('Received %r' % body)
@@ -48,5 +60,5 @@ class Joiner:
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
-                        level=logging.INFO)
+                        level=logging.ERROR)
     joiner = Joiner()

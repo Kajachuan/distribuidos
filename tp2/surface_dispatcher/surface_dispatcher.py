@@ -10,11 +10,11 @@ class SurfaceDispatcher:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         self.channel = connection.channel()
 
-        self.channel.queue_declare(queue='lines_surface', durable=True)
+        self.channel.queue_declare(queue='matches_surface', durable=True)
 
         self.channel.exchange_declare(exchange='surfaces', exchange_type='direct')
 
-        self.tag = self.channel.basic_consume(queue='lines_surface', auto_ack=True, on_message_callback=self.dispatch)
+        self.tag = self.channel.basic_consume(queue='matches_surface', auto_ack=True, on_message_callback=self.dispatch)
         self.channel.start_consuming()
 
     def dispatch(self, ch, method, properties, body):
@@ -38,5 +38,5 @@ class SurfaceDispatcher:
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
-                        level=logging.INFO)
+                        level=logging.ERROR)
     dispatcher = SurfaceDispatcher()
