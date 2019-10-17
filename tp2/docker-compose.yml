@@ -13,8 +13,6 @@ services:
   surface_dispatcher:
     build: surface_dispatcher
     command: python3 -u ./surface_dispatcher.py
-    volumes:
-      - ./surface_dispatcher:/surface_dispatcher
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -26,8 +24,6 @@ services:
       EXCHANGE: surfaces
       OUTPUT_QUEUE: surface_values
     command: python3 -u ./accumulator.py
-    volumes:
-      - ./accumulator:/accumulator
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -39,8 +35,6 @@ services:
       EXCHANGE: surfaces
       OUTPUT_QUEUE: surface_values
     command: python3 -u ./accumulator.py
-    volumes:
-      - ./accumulator:/accumulator
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -52,8 +46,6 @@ services:
       EXCHANGE: surfaces
       OUTPUT_QUEUE: surface_values
     command: python3 -u ./accumulator.py
-    volumes:
-      - ./accumulator:/accumulator
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -61,8 +53,6 @@ services:
   average_calculator:
     build: average_calculator
     command: python3 -u ./average_calculator.py
-    volumes:
-      - ./average_calculator:/average_calculator
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -70,8 +60,6 @@ services:
   joiner:
     build: joiner
     command: python3 -u ./joiner.py
-    volumes:
-      - ./joiner:/joiner
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -79,8 +67,6 @@ services:
   age_calculator:
     build: age_calculator
     command: python3 -u ./age_calculator.py
-    volumes:
-      - ./age_calculator:/age_calculator
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -88,8 +74,6 @@ services:
   age_difference_filter:
     build: age_difference_filter
     command: python3 -u ./age_difference_filter.py
-    volumes:
-      - ./age_difference_filter:/age_difference_filter
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -97,8 +81,6 @@ services:
   different_hands_filter:
     build: different_hands_filter
     command: python3 -u ./different_hands_filter.py
-    volumes:
-      - ./different_hands_filter:/different_hands_filter
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -110,8 +92,6 @@ services:
       EXCHANGE: hands
       OUTPUT_QUEUE: hands_values
     command: python3 -u ./accumulator.py
-    volumes:
-      - ./accumulator:/accumulator
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -123,8 +103,6 @@ services:
       EXCHANGE: hands
       OUTPUT_QUEUE: hands_values
     command: python3 -u ./accumulator.py
-    volumes:
-      - ./accumulator:/accumulator
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -132,8 +110,6 @@ services:
   percentage_calculator:
     build: percentage_calculator
     command: python3 -u ./percentage_calculator.py
-    volumes:
-      - ./percentage_calculator:/percentage_calculator
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -141,8 +117,6 @@ services:
   client:
     build: client
     command: python3 -u ./client.py
-    volumes:
-      - ./client:/client
     depends_on:
       rabbitmq:
         condition: service_healthy

@@ -25,16 +25,14 @@ class Accumulator:
         self.channel.start_consuming()
 
     def add(self, ch, method, properties, body):
+        logging.info('Received %r' % body)
         if body == b'END':
             body = ','.join([self.routing_key, str(self.amount), str(self.total)])
-            self.channel.basic_publish(exchange='',
-                                       routing_key=self.output_queue,
-                                       body=body,
+            self.channel.basic_publish(exchange='', routing_key=self.output_queue, body=body,
                                        properties=pika.BasicProperties(delivery_mode=2,))
             self.channel.basic_cancel(self.tag)
             return
 
-        logging.info('Received %r' % body)
         self.total += float(body.decode())
         self.amount += 1
         logging.debug('Current total: %f' % self.total)
