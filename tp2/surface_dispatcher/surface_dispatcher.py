@@ -10,7 +10,9 @@ class SurfaceDispatcher:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         self.channel = connection.channel()
 
+        self.channel.exchange_declare(exchange='matches', exchange_type='fanout')
         self.channel.queue_declare(queue='matches_surface', durable=True)
+        self.channel.queue_bind(exchange='matches', queue='matches_surface')
 
         self.channel.exchange_declare(exchange='surfaces', exchange_type='direct')
 

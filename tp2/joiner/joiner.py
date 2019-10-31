@@ -11,12 +11,14 @@ class Joiner:
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         self.channel = self.connection.channel()
 
+        self.channel.exchange_declare(exchange='matches', exchange_type='fanout')
         self.channel.queue_declare(queue='matches_join', durable=True)
+        self.channel.queue_bind(exchange='matches', queue='matches_join')
+
         self.channel.queue_declare(queue='joined_hands', durable=True)
         self.channel.queue_declare(queue='joined_age', durable=True)
 
         self.channel.exchange_declare(exchange='players', exchange_type='fanout')
-
         result = self.channel.queue_declare(queue='', exclusive=True, durable=True)
         queue_name = result.method.queue
         self.channel.queue_bind(exchange='players', queue=queue_name)

@@ -9,11 +9,10 @@ class Client:
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
 
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue='matches_join', durable=True)
-        self.channel.queue_declare(queue='matches_surface', durable=True)
         self.channel.queue_declare(queue='response', durable=True)
 
         self.channel.exchange_declare(exchange='players', exchange_type='fanout')
+        self.channel.exchange_declare(exchange='matches', exchange_type='fanout')
 
     def run(self):
         self.send_players_data()
@@ -38,15 +37,11 @@ class Client:
             with open(filename, 'r') as file:
                 file.readline()
                 for line in iter(file.readline, ''):
-                    self.channel.basic_publish(exchange='', routing_key='matches_join', body=line,
-                                               properties=pika.BasicProperties(delivery_mode=2,))
-                    self.channel.basic_publish(exchange='', routing_key='matches_surface', body=line,
+                    self.channel.basic_publish(exchange='matches', routing_key='', body=line,
                                                properties=pika.BasicProperties(delivery_mode=2,))
                     logging.info('Sent %s' % line)
 
-        self.channel.basic_publish(exchange='', routing_key='matches_join', body='END',
-                                   properties=pika.BasicProperties(delivery_mode=2,))
-        self.channel.basic_publish(exchange='', routing_key='matches_surface', body='END',
+        self.channel.basic_publish(exchange='matches', routing_key='', body='END',
                                    properties=pika.BasicProperties(delivery_mode=2,))
 
     def print_response(self, ch, method, properties, body):
