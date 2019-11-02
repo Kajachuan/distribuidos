@@ -16,14 +16,19 @@ class SurfaceDispatcher:
 
         self.channel.exchange_declare(exchange='surfaces', exchange_type='direct')
 
+        self.channel.queue_declare(queue='dispatcher_terminator', durable=True)
+
         self.tag = self.channel.basic_consume(queue='matches_surface', auto_ack=True, on_message_callback=self.dispatch)
         self.channel.start_consuming()
 
     def dispatch(self, ch, method, properties, body):
         logging.info('Received %r' % body)
         if body == b'END':
-            for surface in SURFACES:
-                self.channel.basic_publish(exchange='surfaces', routing_key=surface, body='END')
+            self.channel.basic_publish(exchange='', routing_key='dispatcher_terminator', body='END',
+                                       properties=pika.BasicProperties(delivery_mode=2,))
+            return
+            
+        if body == b'CLOSE':
             self.channel.basic_cancel(self.tag)
             return
 

@@ -17,6 +17,20 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  surface_dispatcher_terminator:
+    build: terminator
+    environment:
+      PROCESSES_NUMBER: ${SURFACE_DISPATCHERS_NUMBER}
+      IN_QUEUE: dispatcher_terminator
+      GROUP_QUEUE: matches_surface
+      NEXT_EXCHANGE: surfaces
+      NEXT_EXCHANGE_TYPE: direct
+      NEXT_ROUTING_KEYS: Hard-Clay-Carpet-Grass
+    command: python3 -u ./terminator.py
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   hard_accumulator:
     build: accumulator
     environment:
