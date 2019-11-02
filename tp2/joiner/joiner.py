@@ -15,14 +15,17 @@ class Joiner:
         self.channel.queue_declare(queue='matches_join', durable=True)
         self.channel.queue_bind(exchange='matches', queue='matches_join')
 
+        self.channel.queue_declare(queue='joiner_terminator', durable=True)
+
         self.channel.exchange_declare(exchange='joined', exchange_type='fanout')
 
         self.channel.exchange_declare(exchange='players', exchange_type='fanout')
         result = self.channel.queue_declare(queue='', exclusive=True, durable=True)
-        queue_name = result.method.queue
-        self.channel.queue_bind(exchange='players', queue=queue_name)
+        self.queue_name = result.method.queue
+        self.channel.queue_bind(exchange='players', queue=self.queue_name)
 
-        self.tag = self.channel.basic_consume(queue=queue_name, auto_ack=True, on_message_callback=self.save_player)
+    def run(self):
+        self.tag = self.channel.basic_consume(queue=self.queue_name, auto_ack=True, on_message_callback=self.save_player)
         self.channel.start_consuming()
 
         self.tag = self.channel.basic_consume(queue='matches_join', auto_ack=True, on_message_callback=self.join)
@@ -40,8 +43,11 @@ class Joiner:
     def join(self, ch, method, properties, body):
         logging.info('Received %r' % body)
         if body == b'END':
-            self.channel.basic_publish(exchange='joined', routing_key='', body='END',
+            self.channel.basic_publish(exchange='', routing_key='joiner_terminator', body='END',
                                        properties=pika.BasicProperties(delivery_mode=2,))
+            return
+
+        if body == b'CLOSE':
             self.channel.basic_cancel(self.tag)
             return
 
@@ -59,3 +65,4 @@ if __name__ == '__main__':
                         datefmt='%m/%d/%Y %H:%M:%S',
                         level=logging.ERROR)
     joiner = Joiner()
+    joiner.run()

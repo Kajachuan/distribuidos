@@ -78,6 +78,20 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  joiner_terminator:
+    build: terminator
+    environment:
+      PROCESSES_NUMBER: ${JOINERS_NUMBER}
+      IN_QUEUE: joiner_terminator
+      GROUP_QUEUE: matches_join
+      NEXT_EXCHANGE: joined
+      NEXT_EXCHANGE_TYPE: fanout
+      NEXT_ROUTING_KEYS: ''
+    command: python3 -u ./terminator.py
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   age_calculator:
     build: age_calculator
     command: python3 -u ./age_calculator.py
