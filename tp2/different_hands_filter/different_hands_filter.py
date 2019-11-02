@@ -16,14 +16,19 @@ class DifferentHandsFilter:
 
         self.channel.exchange_declare(exchange='hands', exchange_type='direct')
 
+        self.channel.queue_declare(queue='hands_filter_terminator', durable=True)
+
         self.tag = self.channel.basic_consume(queue='joined_hands', auto_ack=True, on_message_callback=self.filter)
         self.channel.start_consuming()
 
     def filter(self, ch, method, properties, body):
         logging.info('Received %r' % body)
         if body == b'END':
-            for hand in HANDS:
-                self.channel.basic_publish(exchange='hands', routing_key=hand, body='END')
+            self.channel.basic_publish(exchange='', routing_key='hands_filter_terminator', body='END',
+                                       properties=pika.BasicProperties(delivery_mode=2,))
+            return
+
+        if body == b'CLOSE':
             self.channel.basic_cancel(self.tag)
             return
 

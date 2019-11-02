@@ -127,6 +127,20 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  different_hands_filter_terminator:
+    build: terminator
+    environment:
+      PROCESSES_NUMBER: ${DIFFERENT_HANDS_FILTERS_NUMBER}
+      IN_QUEUE: hands_filter_terminator
+      GROUP_QUEUE: joined_hands
+      NEXT_EXCHANGE: hands
+      NEXT_EXCHANGE_TYPE: direct
+      NEXT_ROUTING_KEYS: R-L-U
+    command: python3 -u ./terminator.py
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   right_accumulator:
     build: accumulator
     environment:
