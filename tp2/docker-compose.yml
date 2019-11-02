@@ -99,6 +99,20 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  age_calculator_terminator:
+    build: terminator
+    environment:
+      PROCESSES_NUMBER: ${AGE_CALCULATORS_NUMBER}
+      IN_QUEUE: calculator_terminator
+      GROUP_QUEUE: joined_age
+      NEXT_EXCHANGE: player_age
+      NEXT_EXCHANGE_TYPE: fanout
+      NEXT_ROUTING_KEYS: ''
+    command: python3 -u ./terminator.py
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   age_difference_filter:
     build: age_difference_filter
     command: python3 -u ./age_difference_filter.py

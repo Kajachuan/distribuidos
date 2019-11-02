@@ -8,7 +8,9 @@ class AgeDifferenceFilter:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         self.channel = connection.channel()
 
+        self.channel.exchange_declare(exchange='player_age', exchange_type='fanout')
         self.channel.queue_declare(queue='age', durable=True)
+        self.channel.queue_bind(exchange='player_age', queue='age')
 
         self.channel.queue_declare(queue='database', durable=True)
 
@@ -37,6 +39,6 @@ class AgeDifferenceFilter:
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
-                        level=logging.ERROR)
+                        level=logging.INFO)
 
     filter = AgeDifferenceFilter()

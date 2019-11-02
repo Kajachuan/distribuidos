@@ -13,7 +13,9 @@ class AgeCalculator:
         self.channel.queue_declare(queue='joined_age', durable=True)
         self.channel.queue_bind(exchange='joined', queue='joined_age')
 
-        self.channel.queue_declare(queue='age', durable=True)
+        self.channel.exchange_declare(exchange='player_age', exchange_type='fanout')
+
+        self.channel.queue_declare(queue='calculator_terminator', durable=True)
 
         self.tag = self.channel.basic_consume(queue='joined_age', auto_ack=True, on_message_callback=self.calculate)
         self.channel.start_consuming()
@@ -21,8 +23,11 @@ class AgeCalculator:
     def calculate(self, ch, method, properties, body):
         logging.info('Received %r' % body)
         if body == b'END':
-            self.channel.basic_publish(exchange='', routing_key='age', body='END',
+            self.channel.basic_publish(exchange='', routing_key='calculator_terminator', body='END',
                                        properties=pika.BasicProperties(delivery_mode=2,))
+            return
+
+        if body == b'CLOSE':
             self.channel.basic_cancel(self.tag)
             return
 
@@ -39,7 +44,7 @@ class AgeCalculator:
         data[4] = str(winner_age)
         data[8] = str(loser_age)
         body = ','.join(data)
-        self.channel.basic_publish(exchange='', routing_key='age', body=body,
+        self.channel.basic_publish(exchange='player_age', routing_key='', body=body,
                                    properties=pika.BasicProperties(delivery_mode=2,))
         logging.info('Sent %s' % body)
 
@@ -53,6 +58,6 @@ class AgeCalculator:
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
-                        level=logging.ERROR)
+                        level=logging.INFO)
 
     calculator = AgeCalculator()
