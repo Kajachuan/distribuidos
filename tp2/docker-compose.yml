@@ -120,6 +120,20 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  age_difference_filter_terminator:
+    build: terminator
+    environment:
+      PROCESSES_NUMBER: ${AGE_DIFFERENCE_FILTERS_NUMBER}
+      IN_QUEUE: age_filter_terminator
+      GROUP_QUEUE: age
+      NEXT_EXCHANGE: database
+      NEXT_EXCHANGE_TYPE: direct
+      NEXT_ROUTING_KEYS: age
+    command: python3 -u ./terminator.py
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
   different_hands_filter:
     build: different_hands_filter
     command: python3 -u ./different_hands_filter.py

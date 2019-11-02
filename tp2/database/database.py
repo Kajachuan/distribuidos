@@ -11,16 +11,21 @@ class Database:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         self.channel = connection.channel()
 
-        self.channel.queue_declare(queue='database', durable=True)
+        self.channel.exchange_declare(exchange='database', exchange_type='direct')
+        self.channel.queue_declare(queue='results', durable=True)
+
+        for filename in FILES:
+            self.channel.queue_bind(exchange='database', queue='results', routing_key=filename)
+
         self.channel.queue_declare(queue='response', durable=True)
 
-        self.tag = self.channel.basic_consume(queue='database', auto_ack=True, on_message_callback=self.persist)
+        self.tag = self.channel.basic_consume(queue='results', auto_ack=True, on_message_callback=self.persist)
         self.channel.start_consuming()
 
     def persist(self, ch, method, properties, body):
         logging.info('Received %r' % body)
-        [response, filename] = body.decode().split(',')
-        if response == 'END':
+        result = body.decode()
+        if result == 'END':
             self.count += 1
 
             if self.count != 3:
@@ -35,8 +40,8 @@ class Database:
                 self.channel.basic_cancel(self.tag)
             return
 
-        file = open(filename, 'a+')
-        file.write(response + '\n')
+        file = open(method.routing_key, 'a+')
+        file.write(result + '\n')
         file.close()
 
 

@@ -11,7 +11,7 @@ class PercentageCalculator:
         self.channel = connection.channel()
         self.channel.queue_declare(queue='hands_values', durable=True)
 
-        self.channel.queue_declare(queue='database', durable=True)
+        self.channel.exchange_declare(exchange='database', exchange_type='direct')
 
         self.tag = self.channel.basic_consume(queue='hands_values', auto_ack=True, on_message_callback=self.calculate)
         self.channel.start_consuming()
@@ -33,11 +33,11 @@ class PercentageCalculator:
         left_percentage = 100 - right_percentage
         right_response = 'R Victories: {}%'.format(right_percentage)
         left_response = 'L Victories: {}%'.format(left_percentage)
-        self.channel.basic_publish(exchange='', routing_key='database', body=','.join([right_response, 'hand']),
+        self.channel.basic_publish(exchange='database', routing_key='hand', body=right_response,
                                    properties=pika.BasicProperties(delivery_mode=2,))
-        self.channel.basic_publish(exchange='', routing_key='database', body=','.join([left_response, 'hand']),
+        self.channel.basic_publish(exchange='database', routing_key='hand', body=left_response,
                                    properties=pika.BasicProperties(delivery_mode=2,))
-        self.channel.basic_publish(exchange='', routing_key='database', body='END,hand',
+        self.channel.basic_publish(exchange='database', routing_key='hand', body='END',
                                    properties=pika.BasicProperties(delivery_mode=2,))
         self.channel.basic_cancel(self.tag)
 

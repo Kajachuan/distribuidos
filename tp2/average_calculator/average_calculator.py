@@ -10,9 +10,9 @@ class AverageCalculator:
         self.channel = connection.channel()
         self.channel.queue_declare(queue='surface_values', durable=True)
 
-        self.channel.queue_declare(queue='database', durable=True)
+        self.channel.exchange_declare(exchange='database', exchange_type='direct')
 
-        self.channel.basic_consume(queue='surface_values', auto_ack=True, on_message_callback=self.calculate)
+        self.tag = self.channel.basic_consume(queue='surface_values', auto_ack=True, on_message_callback=self.calculate)
         self.channel.start_consuming()
 
     def calculate(self, ch, method, properties, body):
@@ -20,12 +20,13 @@ class AverageCalculator:
         [surface, amount, total] = body.decode().split(',')
         avg = float(total) / float(amount)
         result = '{}: {} minutes'.format(surface, avg)
-        self.channel.basic_publish(exchange='', routing_key='database', body=','.join([result, 'surface']),
+        self.channel.basic_publish(exchange='database', routing_key='surface', body=result,
                                    properties=pika.BasicProperties(delivery_mode=2,))
         self.count += 1
         if self.count == 3:
-            self.channel.basic_publish(exchange='', routing_key='database', body='END,surface',
+            self.channel.basic_publish(exchange='database', routing_key='surface', body='END',
                                        properties=pika.BasicProperties(delivery_mode=2,))
+            self.channel.basic_cancel(self.tag)
         logging.info('Sent %s' % result)
 
 if __name__ == '__main__':

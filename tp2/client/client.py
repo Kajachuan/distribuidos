@@ -6,6 +6,7 @@ from glob import glob
 
 class Client:
     def __init__(self):
+        self.results = 0
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
 
         self.channel = self.connection.channel()
@@ -18,7 +19,7 @@ class Client:
         self.send_players_data()
         self.send_matches_data()
 
-        self.channel.basic_consume(queue='response', auto_ack=True, on_message_callback=self.print_response)
+        self.tag = self.channel.basic_consume(queue='response', auto_ack=True, on_message_callback=self.print_response)
         self.channel.start_consuming()
 
     def send_players_data(self):
@@ -46,6 +47,9 @@ class Client:
 
     def print_response(self, ch, method, properties, body):
         print(body.decode())
+        self.results += 1
+        if self.results == 3:
+            self.channel.basic_cancel(self.tag)
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',

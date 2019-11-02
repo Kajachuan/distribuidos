@@ -4,7 +4,7 @@ export SURFACE_DISPATCHERS_NUMBER=1 \
        JOINERS_NUMBER=1 \
        AGE_CALCULATORS_NUMBER=1 \
        AGE_DIFFERENCE_FILTERS_NUMBER=1 \
-       DIFFERENT_HANDS_FILTERS_NUMBER=3
+       DIFFERENT_HANDS_FILTERS_NUMBER=1
 
 docker-compose up --build \
                   --scale surface_dispatcher=$SURFACE_DISPATCHERS_NUMBER \
