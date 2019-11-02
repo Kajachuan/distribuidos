@@ -10,7 +10,9 @@ class DifferentHandsFilter:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         self.channel = connection.channel()
 
+        self.channel.exchange_declare(exchange='joined', exchange_type='fanout')
         self.channel.queue_declare(queue='joined_hands', durable=True)
+        self.channel.queue_bind(exchange='joined', queue='joined_hands')
 
         self.channel.exchange_declare(exchange='hands', exchange_type='direct')
 
