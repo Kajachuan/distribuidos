@@ -28,6 +28,8 @@ class AgeCalculator:
             return
 
         if body == b'CLOSE':
+            self.channel.basic_publish(exchange='', routing_key='calculator_terminator', body='OK',
+                                       properties=pika.BasicProperties(delivery_mode=2,))
             self.channel.basic_cancel(self.tag)
             return
 

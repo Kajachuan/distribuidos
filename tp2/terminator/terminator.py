@@ -11,6 +11,7 @@ class Terminator:
         self.group_queue = group_queue
         self.next_exchange = next_exchange
         self.next_routing_keys = next_routing_keys
+        self.closed = 0
 
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
         self.channel = connection.channel()
@@ -25,18 +26,21 @@ class Terminator:
         self.channel.start_consuming()
 
     def close(self, ch, method, properties, body):
-        if body != b'END':
+        if body == b'END':
+            for i in range(self.processes_number):
+                self.channel.basic_publish(exchange='', routing_key=self.group_queue, body='CLOSE',
+                                           properties=pika.BasicProperties(delivery_mode=2,))
             return
 
-        for i in range(self.processes_number):
-            self.channel.basic_publish(exchange='', routing_key=self.group_queue, body='CLOSE',
-                                       properties=pika.BasicProperties(delivery_mode=2,))
+        if body == b'OK':
+            self.closed += 1
 
-        for routing_key in self.next_routing_keys.split('-'):
-            self.channel.basic_publish(exchange=self.next_exchange, routing_key=routing_key, body='END',
-                                       properties=pika.BasicProperties(delivery_mode=2,))
+            if self.closed == self.processes_number:
+                for routing_key in self.next_routing_keys.split('-'):
+                    self.channel.basic_publish(exchange=self.next_exchange, routing_key=routing_key, body='END',
+                                               properties=pika.BasicProperties(delivery_mode=2,))
 
-        self.channel.basic_cancel(self.tag)
+                self.channel.basic_cancel(self.tag)
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',
