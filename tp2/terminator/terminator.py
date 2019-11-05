@@ -3,6 +3,10 @@
 import os
 import pika
 import logging
+from constants import HOST, END, CLOSE, OK
+
+END_ENCODED = END.encode()
+OK_ENCODED = OK.encode()
 
 class Terminator:
     def __init__(self, processes_number, in_queue, group_queue, next_exchange, next_exchange_type, next_routing_keys):
@@ -13,7 +17,7 @@ class Terminator:
         self.next_routing_keys = next_routing_keys
         self.closed = 0
 
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST))
         self.channel = connection.channel()
 
         self.channel.queue_declare(queue=in_queue, durable=True)
@@ -26,18 +30,18 @@ class Terminator:
         self.channel.start_consuming()
 
     def close(self, ch, method, properties, body):
-        if body == b'END':
+        if body == END_ENCODED:
             for i in range(self.processes_number):
-                self.channel.basic_publish(exchange='', routing_key=self.group_queue, body='CLOSE',
+                self.channel.basic_publish(exchange='', routing_key=self.group_queue, body=CLOSE,
                                            properties=pika.BasicProperties(delivery_mode=2,))
             return
 
-        if body == b'OK':
+        if body == OK_ENCODED:
             self.closed += 1
 
             if self.closed == self.processes_number:
                 for routing_key in self.next_routing_keys.split('-'):
-                    self.channel.basic_publish(exchange=self.next_exchange, routing_key=routing_key, body='END',
+                    self.channel.basic_publish(exchange=self.next_exchange, routing_key=routing_key, body=END,
                                                properties=pika.BasicProperties(delivery_mode=2,))
 
                 self.channel.basic_cancel(self.tag)

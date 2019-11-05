@@ -3,32 +3,42 @@
 import pika
 import logging
 from datetime import datetime
+from constants import HOST, END, OK, CLOSE, \
+                      OUT_JOINER_EXCHANGE, \
+                      OUT_AGE_CALCULATOR_EXCHANGE
+
+END_ENCODED = END.encode()
+CLOSE_ENCODED = CLOSE.encode()
+AGE_CALCULATOR_QUEUE = 'joined_age'
+TERMINATOR_QUEUE = 'calculator_terminator'
 
 class AgeCalculator:
     def __init__(self):
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq'))
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST))
         self.channel = connection.channel()
 
-        self.channel.exchange_declare(exchange='joined', exchange_type='fanout')
-        self.channel.queue_declare(queue='joined_age', durable=True)
-        self.channel.queue_bind(exchange='joined', queue='joined_age')
+        self.channel.exchange_declare(exchange=OUT_JOINER_EXCHANGE, exchange_type='fanout')
+        self.channel.queue_declare(queue=AGE_CALCULATOR_QUEUE, durable=True)
+        self.channel.queue_bind(exchange=OUT_JOINER_EXCHANGE, queue=AGE_CALCULATOR_QUEUE)
 
-        self.channel.exchange_declare(exchange='player_age', exchange_type='fanout')
+        self.channel.exchange_declare(exchange=OUT_AGE_CALCULATOR_EXCHANGE, exchange_type='fanout')
 
-        self.channel.queue_declare(queue='calculator_terminator', durable=True)
+        self.channel.queue_declare(queue=TERMINATOR_QUEUE, durable=True)
 
-        self.tag = self.channel.basic_consume(queue='joined_age', auto_ack=True, on_message_callback=self.calculate)
+    def run(self):
+        self.tag = self.channel.basic_consume(queue=AGE_CALCULATOR_QUEUE, auto_ack=True,
+                                              on_message_callback=self.calculate)
         self.channel.start_consuming()
 
     def calculate(self, ch, method, properties, body):
         logging.info('Received %r' % body)
-        if body == b'END':
-            self.channel.basic_publish(exchange='', routing_key='calculator_terminator', body='END',
+        if body == END_ENCODED:
+            self.channel.basic_publish(exchange='', routing_key=TERMINATOR_QUEUE, body=END,
                                        properties=pika.BasicProperties(delivery_mode=2,))
             return
 
-        if body == b'CLOSE':
-            self.channel.basic_publish(exchange='', routing_key='calculator_terminator', body='OK',
+        if body == CLOSE_ENCODED:
+            self.channel.basic_publish(exchange='', routing_key=TERMINATOR_QUEUE, body=OK,
                                        properties=pika.BasicProperties(delivery_mode=2,))
             self.channel.basic_cancel(self.tag)
             return
@@ -46,7 +56,7 @@ class AgeCalculator:
         data[4] = str(winner_age)
         data[8] = str(loser_age)
         body = ','.join(data)
-        self.channel.basic_publish(exchange='player_age', routing_key='', body=body,
+        self.channel.basic_publish(exchange=OUT_AGE_CALCULATOR_EXCHANGE, routing_key='', body=body,
                                    properties=pika.BasicProperties(delivery_mode=2,))
         logging.info('Sent %s' % body)
 
@@ -63,3 +73,4 @@ if __name__ == '__main__':
                         level=logging.ERROR)
 
     calculator = AgeCalculator()
+    calculator.run()
