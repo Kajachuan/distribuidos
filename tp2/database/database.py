@@ -2,9 +2,7 @@
 
 import pika
 import logging
-from constants import HOST, END, DATABASE_EXCHANGE, RESPONSE_QUEUE
-
-RESULTS_QUEUE = 'results'
+from constants import HOST, END, DATABASE_EXCHANGE, RESPONSE_EXCHANGE
 
 FILES = ['surface', 'hand', 'age']
 
@@ -14,16 +12,17 @@ class Database:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST))
         self.channel = connection.channel()
 
+
         self.channel.exchange_declare(exchange=DATABASE_EXCHANGE, exchange_type='direct')
-        self.channel.queue_declare(queue=RESULTS_QUEUE, durable=True)
-
+        result = self.channel.queue_declare(queue='', durable=True)
+        self.queue_name = result.method.queue
         for filename in FILES:
-            self.channel.queue_bind(exchange=DATABASE_EXCHANGE, queue=RESULTS_QUEUE, routing_key=filename)
+            self.channel.queue_bind(exchange=DATABASE_EXCHANGE, queue=self.queue_name, routing_key=filename)
 
-        self.channel.queue_declare(queue=RESPONSE_QUEUE, durable=True)
+        self.channel.exchange_declare(exchange=RESPONSE_EXCHANGE, exchange_type='fanout')
 
     def run(self):
-        self.tag = self.channel.basic_consume(queue=RESULTS_QUEUE, auto_ack=True, on_message_callback=self.persist)
+        self.tag = self.channel.basic_consume(queue=self.queue_name, auto_ack=True, on_message_callback=self.persist)
         self.channel.start_consuming()
 
     def persist(self, ch, method, properties, body):
@@ -39,7 +38,7 @@ class Database:
                 file = open(filename, 'r')
                 response = file.read()
                 file.close()
-                self.channel.basic_publish(exchange='', routing_key=RESPONSE_QUEUE, body=response,
+                self.channel.basic_publish(exchange=RESPONSE_EXCHANGE, routing_key='', body=response,
                                            properties=pika.BasicProperties(delivery_mode=2,))
                 self.channel.basic_cancel(self.tag)
             return

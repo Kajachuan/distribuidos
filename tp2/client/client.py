@@ -3,24 +3,27 @@
 import pika
 import logging
 from glob import glob
-from constants import HOST, END, RESPONSE_QUEUE, PLAYERS_EXCHANGE, MATCHES_EXCHANGE
+from constants import HOST, END, RESPONSE_EXCHANGE, PLAYERS_EXCHANGE, MATCHES_EXCHANGE
 
 class Client:
     def __init__(self):
         self.results = 0
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST))
-
         self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=RESPONSE_QUEUE, durable=True)
 
         self.channel.exchange_declare(exchange=PLAYERS_EXCHANGE, exchange_type='fanout')
         self.channel.exchange_declare(exchange=MATCHES_EXCHANGE, exchange_type='fanout')
+
+        self.channel.exchange_declare(exchange=RESPONSE_EXCHANGE, exchange_type='fanout')
+        result = self.channel.queue_declare(queue='', durable=True)
+        self.queue_name = result.method.queue
+        self.channel.queue_bind(exchange=RESPONSE_EXCHANGE, queue=self.queue_name)
 
     def run(self):
         self.send_players_data()
         self.send_matches_data()
 
-        self.tag = self.channel.basic_consume(queue=RESPONSE_QUEUE, auto_ack=True,
+        self.tag = self.channel.basic_consume(queue=self.queue_name, auto_ack=True,
                                               on_message_callback=self.print_response)
         self.channel.start_consuming()
 
