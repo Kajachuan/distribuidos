@@ -14,7 +14,6 @@ class AgeDifferenceFilter:
     def __init__(self):
         self.in_queue = RabbitMQQueue(exchange=OUT_AGE_CALCULATOR_EXCHANGE, consumer=True,
                                       queue_name=AGE_DIFFERENCE_FILTER_QUEUE)
-
         self.out_queue = RabbitMQQueue(exchange=DATABASE_EXCHANGE, exchange_type='direct')
         self.terminator_queue = RabbitMQQueue(exchange=TERMINATOR_EXCHANGE)
 

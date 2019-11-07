@@ -10,7 +10,8 @@ ROUTING_KEY = 'surface'
 class AverageCalculator:
     def __init__(self):
         self.count = 0
-        self.in_queue = RabbitMQQueue(exchange=AVERAGE_CALCULATOR_EXCHANGE, consumer=True, exclusive=True)
+        self.in_queue = RabbitMQQueue(exchange=AVERAGE_CALCULATOR_EXCHANGE, consumer=True,
+                                      exclusive=True)
         self.out_queue = RabbitMQQueue(exchange=DATABASE_EXCHANGE, exchange_type='direct')
 
     def run(self):

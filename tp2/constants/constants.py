@@ -1,4 +1,3 @@
-HOST = 'rabbitmq'
 END = 'END'
 OK = 'OK'
 CLOSE = 'CLOSE'

@@ -12,11 +12,9 @@ class Accumulator:
         self.routing_key = routing_key
         self.total = 0
         self.amount = 0.0
-
         self.in_queue = RabbitMQQueue(exchange=exchange, exchange_type='direct',
                                       consumer=True, exclusive=True,
-                                      queue_name='', routing_keys=routing_key.split('-'))
-
+                                      routing_keys=routing_key.split('-'))
         self.out_queue = RabbitMQQueue(exchange=output_exchange)
 
     def run(self):

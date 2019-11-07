@@ -228,6 +228,7 @@ services:
         condition: service_healthy
     depends_on:
       - joiner
+      - surface_dispatcher
 
   database:
     build:
