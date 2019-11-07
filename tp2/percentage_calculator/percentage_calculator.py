@@ -7,7 +7,7 @@ from constants import HOST, END, DATABASE_EXCHANGE
 ROUTING_KEY = 'hand'
 RIGHT = 'R'
 NO_RIGHT = 'L-U'
-HANDS_QUEUE = 'hands_values'
+HANDS_EXCHANGE = 'hands_values'
 
 class PercentageCalculator:
     def __init__(self):
@@ -15,12 +15,17 @@ class PercentageCalculator:
         self.right = None
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST))
         self.channel = connection.channel()
-        self.channel.queue_declare(queue=HANDS_QUEUE, durable=True)
+
+        self.channel.exchange_declare(exchange=HANDS_EXCHANGE, exchange_type='fanout')
+        result = self.channel.queue_declare(queue='', durable=True, exclusive=True)
+        self.queue_name = result.method.queue
+        self.channel.queue_bind(exchange=HANDS_EXCHANGE, queue=self.queue_name)
 
         self.channel.exchange_declare(exchange=DATABASE_EXCHANGE, exchange_type='direct')
 
     def run(self):
-        self.tag = self.channel.basic_consume(queue=HANDS_QUEUE, auto_ack=True, on_message_callback=self.calculate)
+        self.tag = self.channel.basic_consume(queue=self.queue_name, auto_ack=True,
+                                              on_message_callback=self.calculate)
         self.channel.start_consuming()
 
     def calculate(self, ch, method, properties, body):

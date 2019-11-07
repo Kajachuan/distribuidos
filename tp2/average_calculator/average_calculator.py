@@ -4,20 +4,25 @@ import pika
 import logging
 from constants import HOST, END, DATABASE_EXCHANGE
 
-AVERAGE_CALCULATOR_QUEUE = 'surface_values'
+AVERAGE_CALCULATOR_EXCHANGE = 'surface_values'
 ROUTING_KEY = 'surface'
 
 class AverageCalculator:
     def __init__(self):
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST))
         self.count = 0
+
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST))
         self.channel = connection.channel()
-        self.channel.queue_declare(queue=AVERAGE_CALCULATOR_QUEUE, durable=True)
+
+        self.channel.exchange_declare(exchange=AVERAGE_CALCULATOR_EXCHANGE, exchange_type='fanout')
+        result = self.channel.queue_declare(queue='', durable=True, exclusive=True)
+        self.queue_name = result.method.queue
+        self.channel.queue_bind(exchange=AVERAGE_CALCULATOR_EXCHANGE, queue=self.queue_name)
 
         self.channel.exchange_declare(exchange=DATABASE_EXCHANGE, exchange_type='direct')
 
     def run(self):
-        self.tag = self.channel.basic_consume(queue=AVERAGE_CALCULATOR_QUEUE, auto_ack=True,
+        self.tag = self.channel.basic_consume(queue=self.queue_name, auto_ack=True,
                                               on_message_callback=self.calculate)
         self.channel.start_consuming()
 

@@ -12,9 +12,8 @@ class Database:
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST))
         self.channel = connection.channel()
 
-
         self.channel.exchange_declare(exchange=DATABASE_EXCHANGE, exchange_type='direct')
-        result = self.channel.queue_declare(queue='', durable=True)
+        result = self.channel.queue_declare(queue='', durable=True, exclusive=True)
         self.queue_name = result.method.queue
         for filename in FILES:
             self.channel.queue_bind(exchange=DATABASE_EXCHANGE, queue=self.queue_name, routing_key=filename)

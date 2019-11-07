@@ -42,7 +42,7 @@ services:
     environment:
       ROUTING_KEY: Hard
       EXCHANGE: surfaces
-      OUTPUT_QUEUE: surface_values
+      OUTPUT_EXCHANGE: surface_values
     command: python3 -u ./accumulator.py
     depends_on:
       rabbitmq:
@@ -55,7 +55,7 @@ services:
     environment:
       ROUTING_KEY: Clay
       EXCHANGE: surfaces
-      OUTPUT_QUEUE: surface_values
+      OUTPUT_EXCHANGE: surface_values
     command: python3 -u ./accumulator.py
     depends_on:
       rabbitmq:
@@ -68,7 +68,7 @@ services:
     environment:
       ROUTING_KEY: Grass-Carpet
       EXCHANGE: surfaces
-      OUTPUT_QUEUE: surface_values
+      OUTPUT_EXCHANGE: surface_values
     command: python3 -u ./accumulator.py
     depends_on:
       rabbitmq:
@@ -190,7 +190,7 @@ services:
     environment:
       ROUTING_KEY: R
       EXCHANGE: hands
-      OUTPUT_QUEUE: hands_values
+      OUTPUT_EXCHANGE: hands_values
     command: python3 -u ./accumulator.py
     depends_on:
       rabbitmq:
@@ -203,7 +203,7 @@ services:
     environment:
       ROUTING_KEY: L-U
       EXCHANGE: hands
-      OUTPUT_QUEUE: hands_values
+      OUTPUT_EXCHANGE: hands_values
     command: python3 -u ./accumulator.py
     depends_on:
       rabbitmq:
