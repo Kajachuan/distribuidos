@@ -6,7 +6,7 @@ from rabbitmq_queue import RabbitMQQueue
 
 END_ENCODED = END.encode()
 CLOSE_ENCODED = CLOSE.encode()
-AGE_DIFFERENCE_FILTER_QUEUE = 'age'
+AGE_DIFFERENCE_FILTER_QUEUE = 'age_queue'
 ROUTING_KEY = 'age'
 TERMINATOR_EXCHANGE = 'age_filter_terminator'
 
