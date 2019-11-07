@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import pika
 import logging
 from datetime import datetime
-from constants import HOST, END, OK, CLOSE, OUT_JOINER_EXCHANGE, OUT_AGE_CALCULATOR_EXCHANGE
+from constants import END, OK, CLOSE, OUT_JOINER_EXCHANGE, OUT_AGE_CALCULATOR_EXCHANGE
+from rabbitmq_queue import RabbitMQQueue
 
 END_ENCODED = END.encode()
 CLOSE_ENCODED = CLOSE.encode()
@@ -12,32 +12,22 @@ TERMINATOR_EXCHANGE = 'calculator_terminator'
 
 class AgeCalculator:
     def __init__(self):
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST))
-        self.channel = connection.channel()
-
-        self.channel.exchange_declare(exchange=OUT_JOINER_EXCHANGE, exchange_type='fanout')
-        self.channel.queue_declare(queue=AGE_CALCULATOR_QUEUE, durable=True)
-        self.channel.queue_bind(exchange=OUT_JOINER_EXCHANGE, queue=AGE_CALCULATOR_QUEUE)
-
-        self.channel.exchange_declare(exchange=OUT_AGE_CALCULATOR_EXCHANGE, exchange_type='fanout')
-        self.channel.exchange_declare(exchange=TERMINATOR_EXCHANGE, exchange_type='fanout')
+        self.in_queue = RabbitMQQueue(exchange=OUT_JOINER_EXCHANGE, consumer=True, queue_name=AGE_CALCULATOR_QUEUE)
+        self.out_queue = RabbitMQQueue(exchange=OUT_AGE_CALCULATOR_EXCHANGE)
+        self.terminator_queue = RabbitMQQueue(exchange=TERMINATOR_EXCHANGE)
 
     def run(self):
-        self.tag = self.channel.basic_consume(queue=AGE_CALCULATOR_QUEUE, auto_ack=True,
-                                              on_message_callback=self.calculate)
-        self.channel.start_consuming()
+        self.in_queue.consume(self.calculate)
 
     def calculate(self, ch, method, properties, body):
         logging.info('Received %r' % body)
         if body == END_ENCODED:
-            self.channel.basic_publish(exchange=TERMINATOR_EXCHANGE, routing_key='', body=END,
-                                       properties=pika.BasicProperties(delivery_mode=2,))
+            self.terminator_queue.publish(END)
             return
 
         if body == CLOSE_ENCODED:
-            self.channel.basic_publish(exchange=TERMINATOR_EXCHANGE, routing_key='', body=OK,
-                                       properties=pika.BasicProperties(delivery_mode=2,))
-            self.channel.basic_cancel(self.tag)
+            self.terminator_queue.publish(OK)
+            self.terminator_queue.cancel()
             return
 
         data = body.decode().split(',')
@@ -53,8 +43,7 @@ class AgeCalculator:
         data[4] = str(winner_age)
         data[8] = str(loser_age)
         body = ','.join(data)
-        self.channel.basic_publish(exchange=OUT_AGE_CALCULATOR_EXCHANGE, routing_key='', body=body,
-                                   properties=pika.BasicProperties(delivery_mode=2,))
+        self.out_queue.publish(body)
         logging.info('Sent %s' % body)
 
     def _compute_age(self, birthdate, tourney_date):

@@ -14,7 +14,7 @@ class RabbitMQQueue:
         if not consumer:
             return
 
-        result = self.channel.queue_declare(queue=queue_name, exclusive=exclusive)
+        result = self.channel.queue_declare(queue=queue_name, durable=True, exclusive=exclusive)
         self.queue_name = result.method.queue
         for routing_key in routing_keys:
             self.channel.queue_bind(exchange=exchange, queue=self.queue_name, routing_key=routing_key)

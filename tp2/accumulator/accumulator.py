@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-import pika
 import logging
 from constants import END
 from rabbitmq_queue import RabbitMQQueue
