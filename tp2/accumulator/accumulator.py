@@ -3,7 +3,8 @@
 import os
 import pika
 import logging
-from constants import HOST, END
+from constants import END
+from rabbitmq_queue import RabbitMQQueue
 
 END_ENCODED = END.encode()
 
@@ -13,29 +14,21 @@ class Accumulator:
         self.output_exchange = output_exchange
         self.total = 0
         self.amount = 0.0
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST))
-        self.channel = connection.channel()
 
-        self.channel.exchange_declare(exchange=exchange, exchange_type='direct')
-        result = self.channel.queue_declare(queue='', exclusive=True)
-        self.queue_name = result.method.queue
-        for surface in routing_key.split('-'):
-            self.channel.queue_bind(exchange=exchange, queue=self.queue_name, routing_key=surface)
+        self.in_queue = RabbitMQQueue(exchange=exchange, exchange_type='direct', consumer=True,
+                                      exclusive=True, queue_name='', routing_keys=routing_key.split('-'))
 
-        self.channel.exchange_declare(exchange=output_exchange, exchange_type='fanout')
+        self.out_queue = RabbitMQQueue(exchange=output_exchange)
 
     def run(self):
-        self.tag = self.channel.basic_consume(queue=self.queue_name, auto_ack=True,
-                                              on_message_callback=self.add)
-        self.channel.start_consuming()
+        self.in_queue.consume(self.add)
 
     def add(self, ch, method, properties, body):
         logging.info('Received %r' % body)
         if body == END_ENCODED:
             body = ','.join([self.routing_key, str(self.amount), str(self.total)])
-            self.channel.basic_publish(exchange=self.output_exchange, routing_key='', body=body,
-                                       properties=pika.BasicProperties(delivery_mode=2,))
-            self.channel.basic_cancel(self.tag)
+            self.out_queue.publish(body)
+            self.out_queue.cancel()
             return
 
         self.total += float(body.decode())
