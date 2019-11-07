@@ -2,8 +2,7 @@
 
 import logging
 import pika
-from constants import HOST, END, CLOSE, OK, \
-                      OUT_AGE_CALCULATOR_EXCHANGE, DATABASE_EXCHANGE
+from constants import HOST, END, CLOSE, OK, OUT_AGE_CALCULATOR_EXCHANGE, DATABASE_EXCHANGE
 
 END_ENCODED = END.encode()
 CLOSE_ENCODED = CLOSE.encode()

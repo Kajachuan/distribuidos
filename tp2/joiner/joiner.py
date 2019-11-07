@@ -2,8 +2,7 @@
 
 import pika
 import logging
-from constants import HOST, END, CLOSE, OK, OUT_JOINER_EXCHANGE, \
-                      MATCHES_EXCHANGE, PLAYERS_EXCHANGE
+from constants import HOST, END, CLOSE, OK, OUT_JOINER_EXCHANGE, MATCHES_EXCHANGE, PLAYERS_EXCHANGE
 
 END_ENCODED = END.encode()
 CLOSE_ENCODED = CLOSE.encode()

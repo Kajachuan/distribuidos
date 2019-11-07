@@ -15,7 +15,7 @@ class Client:
         self.channel.exchange_declare(exchange=MATCHES_EXCHANGE, exchange_type='fanout')
 
         self.channel.exchange_declare(exchange=RESPONSE_EXCHANGE, exchange_type='fanout')
-        result = self.channel.queue_declare(queue='', durable=True)
+        result = self.channel.queue_declare(queue='', durable=True, exclusive=True)
         self.queue_name = result.method.queue
         self.channel.queue_bind(exchange=RESPONSE_EXCHANGE, queue=self.queue_name)
 
