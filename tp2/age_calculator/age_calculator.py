@@ -12,7 +12,8 @@ TERMINATOR_EXCHANGE = 'calculator_terminator'
 
 class AgeCalculator:
     def __init__(self):
-        self.in_queue = RabbitMQQueue(exchange=OUT_JOINER_EXCHANGE, consumer=True, queue_name=AGE_CALCULATOR_QUEUE)
+        self.in_queue = RabbitMQQueue(exchange=OUT_JOINER_EXCHANGE, consumer=True,
+                                      queue_name=AGE_CALCULATOR_QUEUE)
         self.out_queue = RabbitMQQueue(exchange=OUT_AGE_CALCULATOR_EXCHANGE)
         self.terminator_queue = RabbitMQQueue(exchange=TERMINATOR_EXCHANGE)
 
@@ -27,7 +28,7 @@ class AgeCalculator:
 
         if body == CLOSE_ENCODED:
             self.terminator_queue.publish(OK)
-            self.terminator_queue.cancel()
+            self.in_queue.cancel()
             return
 
         data = body.decode().split(',')

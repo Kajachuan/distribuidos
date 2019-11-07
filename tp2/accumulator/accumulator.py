@@ -10,12 +10,12 @@ END_ENCODED = END.encode()
 class Accumulator:
     def __init__(self, routing_key, exchange, output_exchange):
         self.routing_key = routing_key
-        self.output_exchange = output_exchange
         self.total = 0
         self.amount = 0.0
 
-        self.in_queue = RabbitMQQueue(exchange=exchange, exchange_type='direct', consumer=True,
-                                      exclusive=True, queue_name='', routing_keys=routing_key.split('-'))
+        self.in_queue = RabbitMQQueue(exchange=exchange, exchange_type='direct',
+                                      consumer=True, exclusive=True,
+                                      queue_name='', routing_keys=routing_key.split('-'))
 
         self.out_queue = RabbitMQQueue(exchange=output_exchange)
 
@@ -27,7 +27,7 @@ class Accumulator:
         if body == END_ENCODED:
             body = ','.join([self.routing_key, str(self.amount), str(self.total)])
             self.out_queue.publish(body)
-            self.out_queue.cancel()
+            self.in_queue.cancel()
             return
 
         self.total += float(body.decode())
