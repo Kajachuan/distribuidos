@@ -8,7 +8,7 @@ from constants import HOST, END, CLOSE, OK, \
 END_ENCODED = END.encode()
 CLOSE_ENCODED = CLOSE.encode()
 AGE_DIFFERENCE_FILTER_QUEUE = 'age'
-TERMINATOR_QUEUE = 'age_filter_terminator'
+TERMINATOR_EXCHANGE = 'age_filter_terminator'
 
 class AgeDifferenceFilter:
     def __init__(self):
@@ -20,8 +20,7 @@ class AgeDifferenceFilter:
         self.channel.queue_bind(exchange=OUT_AGE_CALCULATOR_EXCHANGE, queue=AGE_DIFFERENCE_FILTER_QUEUE)
 
         self.channel.exchange_declare(exchange=DATABASE_EXCHANGE, exchange_type='direct')
-
-        self.channel.queue_declare(queue=TERMINATOR_QUEUE, durable=True)
+        self.channel.exchange_declare(exchange=TERMINATOR_EXCHANGE, exchange_type='fanout')
 
     def run(self):
         self.tag = self.channel.basic_consume(queue=AGE_DIFFERENCE_FILTER_QUEUE, auto_ack=True,
@@ -31,12 +30,12 @@ class AgeDifferenceFilter:
     def filter(self, ch, method, properties, body):
         logging.info('Received %r' % body)
         if body == END_ENCODED:
-            self.channel.basic_publish(exchange='', routing_key=TERMINATOR_QUEUE, body=END,
+            self.channel.basic_publish(exchange=TERMINATOR_EXCHANGE, routing_key='', body=END,
                                        properties=pika.BasicProperties(delivery_mode=2,))
             return
 
         if body == CLOSE_ENCODED:
-            self.channel.basic_publish(exchange='', routing_key=TERMINATOR_QUEUE, body=OK,
+            self.channel.basic_publish(exchange=TERMINATOR_EXCHANGE, routing_key='', body=OK,
                                        properties=pika.BasicProperties(delivery_mode=2,))
             self.channel.basic_cancel(self.tag)
             return

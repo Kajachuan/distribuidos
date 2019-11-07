@@ -9,20 +9,19 @@ END_ENCODED = END.encode()
 CLOSE_ENCODED = CLOSE.encode()
 SURFACE_EXCHANGE = 'surfaces'
 MATCHES_QUEUE = 'matches_surface'
-TERMINATOR_QUEUE = 'dispatcher_terminator'
+TERMINATOR_EXCHANGE = 'dispatcher_terminator'
 
 class SurfaceDispatcher:
     def __init__(self):
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST))
         self.channel = connection.channel()
 
+        self.channel.exchange_declare(exchange=SURFACE_EXCHANGE, exchange_type='direct')
+        self.channel.exchange_declare(exchange=TERMINATOR_EXCHANGE, exchange_type='fanout')
+
         self.channel.exchange_declare(exchange=MATCHES_EXCHANGE, exchange_type='fanout')
         self.channel.queue_declare(queue=MATCHES_QUEUE, durable=True)
         self.channel.queue_bind(exchange=MATCHES_EXCHANGE, queue=MATCHES_QUEUE)
-
-        self.channel.exchange_declare(exchange=SURFACE_EXCHANGE, exchange_type='direct')
-
-        self.channel.queue_declare(queue=TERMINATOR_QUEUE, durable=True)
 
     def run(self):
         self.tag = self.channel.basic_consume(queue=MATCHES_QUEUE, auto_ack=True, on_message_callback=self.dispatch)
@@ -31,12 +30,12 @@ class SurfaceDispatcher:
     def dispatch(self, ch, method, properties, body):
         logging.info('Received %r' % body)
         if body == END_ENCODED:
-            self.channel.basic_publish(exchange='', routing_key=TERMINATOR_QUEUE, body=END,
+            self.channel.basic_publish(exchange=TERMINATOR_EXCHANGE, routing_key='', body=END,
                                        properties=pika.BasicProperties(delivery_mode=2,))
             return
 
         if body == CLOSE_ENCODED:
-            self.channel.basic_publish(exchange='', routing_key=TERMINATOR_QUEUE, body=OK,
+            self.channel.basic_publish(exchange=TERMINATOR_EXCHANGE, routing_key='', body=OK,
                                        properties=pika.BasicProperties(delivery_mode=2,))
             self.channel.basic_cancel(self.tag)
             return

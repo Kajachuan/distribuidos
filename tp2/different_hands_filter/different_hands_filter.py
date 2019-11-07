@@ -8,7 +8,7 @@ END_ENCODED = END.encode()
 CLOSE_ENCODED = CLOSE.encode()
 JOINED_QUEUE = 'joined_hands'
 HANDS_EXCHANGE = 'hands'
-TERMINATOR_QUEUE = 'hands_filter_terminator'
+TERMINATOR_EXCHANGE = 'hands_filter_terminator'
 
 HANDS = ['R', 'L', 'U']
 
@@ -22,8 +22,7 @@ class DifferentHandsFilter:
         self.channel.queue_bind(exchange=OUT_JOINER_EXCHANGE, queue=JOINED_QUEUE)
 
         self.channel.exchange_declare(exchange=HANDS_EXCHANGE, exchange_type='direct')
-
-        self.channel.queue_declare(queue=TERMINATOR_QUEUE, durable=True)
+        self.channel.exchange_declare(exchange=TERMINATOR_EXCHANGE, exchange_type='fanout')
 
     def run(self):
         self.tag = self.channel.basic_consume(queue=JOINED_QUEUE, auto_ack=True, on_message_callback=self.filter)
@@ -32,12 +31,12 @@ class DifferentHandsFilter:
     def filter(self, ch, method, properties, body):
         logging.info('Received %r' % body)
         if body == END_ENCODED:
-            self.channel.basic_publish(exchange='', routing_key=TERMINATOR_QUEUE, body=END,
+            self.channel.basic_publish(exchange=TERMINATOR_EXCHANGE, routing_key='', body=END,
                                        properties=pika.BasicProperties(delivery_mode=2,))
             return
 
         if body == CLOSE_ENCODED:
-            self.channel.basic_publish(exchange='', routing_key=TERMINATOR_QUEUE, body=OK,
+            self.channel.basic_publish(exchange=TERMINATOR_EXCHANGE, routing_key='', body=OK,
                                        properties=pika.BasicProperties(delivery_mode=2,))
             self.channel.basic_cancel(self.tag)
             return

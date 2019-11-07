@@ -3,14 +3,12 @@
 import pika
 import logging
 from datetime import datetime
-from constants import HOST, END, OK, CLOSE, \
-                      OUT_JOINER_EXCHANGE, \
-                      OUT_AGE_CALCULATOR_EXCHANGE
+from constants import HOST, END, OK, CLOSE, OUT_JOINER_EXCHANGE, OUT_AGE_CALCULATOR_EXCHANGE
 
 END_ENCODED = END.encode()
 CLOSE_ENCODED = CLOSE.encode()
 AGE_CALCULATOR_QUEUE = 'joined_age'
-TERMINATOR_QUEUE = 'calculator_terminator'
+TERMINATOR_EXCHANGE = 'calculator_terminator'
 
 class AgeCalculator:
     def __init__(self):
@@ -22,8 +20,7 @@ class AgeCalculator:
         self.channel.queue_bind(exchange=OUT_JOINER_EXCHANGE, queue=AGE_CALCULATOR_QUEUE)
 
         self.channel.exchange_declare(exchange=OUT_AGE_CALCULATOR_EXCHANGE, exchange_type='fanout')
-
-        self.channel.queue_declare(queue=TERMINATOR_QUEUE, durable=True)
+        self.channel.exchange_declare(exchange=TERMINATOR_EXCHANGE, exchange_type='fanout')
 
     def run(self):
         self.tag = self.channel.basic_consume(queue=AGE_CALCULATOR_QUEUE, auto_ack=True,
@@ -33,12 +30,12 @@ class AgeCalculator:
     def calculate(self, ch, method, properties, body):
         logging.info('Received %r' % body)
         if body == END_ENCODED:
-            self.channel.basic_publish(exchange='', routing_key=TERMINATOR_QUEUE, body=END,
+            self.channel.basic_publish(exchange=TERMINATOR_EXCHANGE, routing_key='', body=END,
                                        properties=pika.BasicProperties(delivery_mode=2,))
             return
 
         if body == CLOSE_ENCODED:
-            self.channel.basic_publish(exchange='', routing_key=TERMINATOR_QUEUE, body=OK,
+            self.channel.basic_publish(exchange=TERMINATOR_EXCHANGE, routing_key='', body=OK,
                                        properties=pika.BasicProperties(delivery_mode=2,))
             self.channel.basic_cancel(self.tag)
             return

@@ -8,7 +8,7 @@ from constants import HOST, END, CLOSE, OK, OUT_JOINER_EXCHANGE, \
 END_ENCODED = END.encode()
 CLOSE_ENCODED = CLOSE.encode()
 MATCHES_QUEUE = 'matches_join'
-TERMINATOR_QUEUE = 'joiner_terminator'
+TERMINATOR_EXCHANGE = 'joiner_terminator'
 
 class Joiner:
     def __init__(self):
@@ -17,13 +17,12 @@ class Joiner:
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST))
         self.channel = self.connection.channel()
 
+        self.channel.exchange_declare(exchange=OUT_JOINER_EXCHANGE, exchange_type='fanout')
+        self.channel.exchange_declare(exchange=TERMINATOR_EXCHANGE, exchange_type='fanout')
+
         self.channel.exchange_declare(exchange=MATCHES_EXCHANGE, exchange_type='fanout')
         self.channel.queue_declare(queue=MATCHES_QUEUE, durable=True)
         self.channel.queue_bind(exchange=MATCHES_EXCHANGE, queue=MATCHES_QUEUE)
-
-        self.channel.queue_declare(queue=TERMINATOR_QUEUE, durable=True)
-
-        self.channel.exchange_declare(exchange=OUT_JOINER_EXCHANGE, exchange_type='fanout')
 
         self.channel.exchange_declare(exchange=PLAYERS_EXCHANGE, exchange_type='fanout')
         result = self.channel.queue_declare(queue='', exclusive=True, durable=True)
@@ -49,12 +48,12 @@ class Joiner:
     def join(self, ch, method, properties, body):
         logging.info('Received %r' % body)
         if body == END_ENCODED:
-            self.channel.basic_publish(exchange='', routing_key=TERMINATOR_QUEUE, body=END,
+            self.channel.basic_publish(exchange=TERMINATOR_EXCHANGE, routing_key='', body=END,
                                        properties=pika.BasicProperties(delivery_mode=2,))
             return
 
         if body == CLOSE_ENCODED:
-            self.channel.basic_publish(exchange='', routing_key=TERMINATOR_QUEUE, body=OK,
+            self.channel.basic_publish(exchange=TERMINATOR_EXCHANGE, routing_key='', body=OK,
                                        properties=pika.BasicProperties(delivery_mode=2,))
             self.channel.basic_cancel(self.tag)
             return
