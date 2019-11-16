@@ -1,57 +1,50 @@
 #!/usr/bin/env python3
 
-import pika
 import logging
 from glob import glob
-from constants import HOST, END, RESPONSE_QUEUE, PLAYERS_EXCHANGE, MATCHES_EXCHANGE
+from constants import END, RESPONSE_EXCHANGE, PLAYERS_EXCHANGE, MATCHES_EXCHANGE
+from rabbitmq_queue import RabbitMQQueue
+
+PLAYERS_DATA = './data/atp_players.csv'
+MATCHES_DATA = './data/atp_matches_*.csv'
 
 class Client:
     def __init__(self):
         self.results = 0
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST))
-
-        self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=RESPONSE_QUEUE, durable=True)
-
-        self.channel.exchange_declare(exchange=PLAYERS_EXCHANGE, exchange_type='fanout')
-        self.channel.exchange_declare(exchange=MATCHES_EXCHANGE, exchange_type='fanout')
+        self.in_queue = RabbitMQQueue(exchange=RESPONSE_EXCHANGE, consumer=True,
+                                      exclusive=True)
+        self.players_queue = RabbitMQQueue(exchange=PLAYERS_EXCHANGE)
+        self.matches_queue = RabbitMQQueue(exchange=MATCHES_EXCHANGE)
 
     def run(self):
         self.send_players_data()
         self.send_matches_data()
-
-        self.tag = self.channel.basic_consume(queue=RESPONSE_QUEUE, auto_ack=True,
-                                              on_message_callback=self.print_response)
-        self.channel.start_consuming()
+        self.in_queue.consume(self.print_response)
 
     def send_players_data(self):
-        with open('./data/atp_players.csv', 'r') as file:
+        with open(PLAYERS_DATA, 'r') as file:
             file.readline()
             for line in iter(file.readline, ''):
-                self.channel.basic_publish(exchange=PLAYERS_EXCHANGE, routing_key='', body=line,
-                                           properties=pika.BasicProperties(delivery_mode=2,))
+                self.players_queue.publish(line)
                 logging.info('Sent %s' % line)
 
-        self.channel.basic_publish(exchange=PLAYERS_EXCHANGE, routing_key='', body=END,
-                                   properties=pika.BasicProperties(delivery_mode=2,))
+        self.players_queue.publish(END)
 
     def send_matches_data(self):
-        for filename in glob('./data/atp_matches_*.csv'):
+        for filename in glob(MATCHES_DATA):
             with open(filename, 'r') as file:
                 file.readline()
                 for line in iter(file.readline, ''):
-                    self.channel.basic_publish(exchange=MATCHES_EXCHANGE, routing_key='', body=line,
-                                               properties=pika.BasicProperties(delivery_mode=2,))
+                    self.matches_queue.publish(line)
                     logging.info('Sent %s' % line)
 
-        self.channel.basic_publish(exchange=MATCHES_EXCHANGE, routing_key='', body=END,
-                                   properties=pika.BasicProperties(delivery_mode=2,))
+        self.matches_queue.publish(END)
 
     def print_response(self, ch, method, properties, body):
         print(body.decode())
         self.results += 1
         if self.results == 3:
-            self.channel.basic_cancel(self.tag)
+            self.in_queue.cancel()
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',

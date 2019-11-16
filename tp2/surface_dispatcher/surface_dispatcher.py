@@ -2,43 +2,34 @@
 
 import pika
 import logging
-from constants import HOST, END, CLOSE, OK, MATCHES_EXCHANGE
+from constants import END, CLOSE, OK, MATCHES_EXCHANGE
+from rabbitmq_queue import RabbitMQQueue
 
 SURFACES = ['Hard', 'Clay', 'Carpet', 'Grass']
 END_ENCODED = END.encode()
 CLOSE_ENCODED = CLOSE.encode()
 SURFACE_EXCHANGE = 'surfaces'
 MATCHES_QUEUE = 'matches_surface'
-TERMINATOR_QUEUE = 'dispatcher_terminator'
+TERMINATOR_EXCHANGE = 'dispatcher_terminator'
 
 class SurfaceDispatcher:
     def __init__(self):
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host=HOST))
-        self.channel = connection.channel()
-
-        self.channel.exchange_declare(exchange=MATCHES_EXCHANGE, exchange_type='fanout')
-        self.channel.queue_declare(queue=MATCHES_QUEUE, durable=True)
-        self.channel.queue_bind(exchange=MATCHES_EXCHANGE, queue=MATCHES_QUEUE)
-
-        self.channel.exchange_declare(exchange=SURFACE_EXCHANGE, exchange_type='direct')
-
-        self.channel.queue_declare(queue=TERMINATOR_QUEUE, durable=True)
+        self.in_queue = RabbitMQQueue(exchange=MATCHES_EXCHANGE, consumer=True, queue_name=MATCHES_QUEUE)
+        self.out_queue = RabbitMQQueue(exchange=SURFACE_EXCHANGE, exchange_type='direct')
+        self.terminator_queue = RabbitMQQueue(exchange=TERMINATOR_EXCHANGE)
 
     def run(self):
-        self.tag = self.channel.basic_consume(queue=MATCHES_QUEUE, auto_ack=True, on_message_callback=self.dispatch)
-        self.channel.start_consuming()
+        self.in_queue.consume(self.dispatch)
 
     def dispatch(self, ch, method, properties, body):
         logging.info('Received %r' % body)
         if body == END_ENCODED:
-            self.channel.basic_publish(exchange='', routing_key=TERMINATOR_QUEUE, body=END,
-                                       properties=pika.BasicProperties(delivery_mode=2,))
+            self.terminator_queue.publish(END)
             return
 
         if body == CLOSE_ENCODED:
-            self.channel.basic_publish(exchange='', routing_key=TERMINATOR_QUEUE, body=OK,
-                                       properties=pika.BasicProperties(delivery_mode=2,))
-            self.channel.basic_cancel(self.tag)
+            self.terminator_queue.publish(OK)
+            self.in_queue.cancel()
             return
 
         data = body.decode().split(',')
@@ -48,12 +39,13 @@ class SurfaceDispatcher:
         if minutes == '' or surface in ('', 'None'):
             return
 
-        self.channel.basic_publish(exchange=SURFACE_EXCHANGE, routing_key=surface, body=minutes)
+        self.out_queue.publish(minutes, surface)
         logging.info('Sent %s minutes to %s accumulator' % (minutes, surface))
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s',
                         datefmt='%m/%d/%Y %H:%M:%S',
                         level=logging.ERROR)
+
     dispatcher = SurfaceDispatcher()
     dispatcher.run()

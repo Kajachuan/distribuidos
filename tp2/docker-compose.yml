@@ -25,8 +25,8 @@ services:
       dockerfile: terminator/Dockerfile
     environment:
       PROCESSES_NUMBER: ${SURFACE_DISPATCHERS_NUMBER}
-      IN_QUEUE: dispatcher_terminator
-      GROUP_QUEUE: matches_surface
+      IN_EXCHANGE: dispatcher_terminator
+      GROUP_EXCHANGE: matches
       NEXT_EXCHANGE: surfaces
       NEXT_EXCHANGE_TYPE: direct
       NEXT_ROUTING_KEYS: Hard-Clay-Carpet-Grass
@@ -42,7 +42,7 @@ services:
     environment:
       ROUTING_KEY: Hard
       EXCHANGE: surfaces
-      OUTPUT_QUEUE: surface_values
+      OUTPUT_EXCHANGE: surface_values
     command: python3 -u ./accumulator.py
     depends_on:
       rabbitmq:
@@ -55,7 +55,7 @@ services:
     environment:
       ROUTING_KEY: Clay
       EXCHANGE: surfaces
-      OUTPUT_QUEUE: surface_values
+      OUTPUT_EXCHANGE: surface_values
     command: python3 -u ./accumulator.py
     depends_on:
       rabbitmq:
@@ -68,7 +68,7 @@ services:
     environment:
       ROUTING_KEY: Grass-Carpet
       EXCHANGE: surfaces
-      OUTPUT_QUEUE: surface_values
+      OUTPUT_EXCHANGE: surface_values
     command: python3 -u ./accumulator.py
     depends_on:
       rabbitmq:
@@ -98,8 +98,8 @@ services:
       dockerfile: terminator/Dockerfile
     environment:
       PROCESSES_NUMBER: ${JOINERS_NUMBER}
-      IN_QUEUE: joiner_terminator
-      GROUP_QUEUE: matches_join
+      IN_EXCHANGE: joiner_terminator
+      GROUP_EXCHANGE: matches
       NEXT_EXCHANGE: joined
       NEXT_EXCHANGE_TYPE: fanout
       NEXT_ROUTING_KEYS: ''
@@ -123,8 +123,8 @@ services:
       dockerfile: terminator/Dockerfile
     environment:
       PROCESSES_NUMBER: ${AGE_CALCULATORS_NUMBER}
-      IN_QUEUE: calculator_terminator
-      GROUP_QUEUE: joined_age
+      IN_EXCHANGE: calculator_terminator
+      GROUP_EXCHANGE: joined
       NEXT_EXCHANGE: player_age
       NEXT_EXCHANGE_TYPE: fanout
       NEXT_ROUTING_KEYS: ''
@@ -148,8 +148,8 @@ services:
       dockerfile: terminator/Dockerfile
     environment:
       PROCESSES_NUMBER: ${AGE_DIFFERENCE_FILTERS_NUMBER}
-      IN_QUEUE: age_filter_terminator
-      GROUP_QUEUE: age
+      IN_EXCHANGE: age_filter_terminator
+      GROUP_EXCHANGE: player_age
       NEXT_EXCHANGE: database
       NEXT_EXCHANGE_TYPE: direct
       NEXT_ROUTING_KEYS: age
@@ -173,8 +173,8 @@ services:
       dockerfile: terminator/Dockerfile
     environment:
       PROCESSES_NUMBER: ${DIFFERENT_HANDS_FILTERS_NUMBER}
-      IN_QUEUE: hands_filter_terminator
-      GROUP_QUEUE: joined_hands
+      IN_EXCHANGE: hands_filter_terminator
+      GROUP_EXCHANGE: joined
       NEXT_EXCHANGE: hands
       NEXT_EXCHANGE_TYPE: direct
       NEXT_ROUTING_KEYS: R-L-U
@@ -190,7 +190,7 @@ services:
     environment:
       ROUTING_KEY: R
       EXCHANGE: hands
-      OUTPUT_QUEUE: hands_values
+      OUTPUT_EXCHANGE: hands_values
     command: python3 -u ./accumulator.py
     depends_on:
       rabbitmq:
@@ -203,7 +203,7 @@ services:
     environment:
       ROUTING_KEY: L-U
       EXCHANGE: hands
-      OUTPUT_QUEUE: hands_values
+      OUTPUT_EXCHANGE: hands_values
     command: python3 -u ./accumulator.py
     depends_on:
       rabbitmq:
@@ -228,6 +228,7 @@ services:
         condition: service_healthy
     depends_on:
       - joiner
+      - surface_dispatcher
 
   database:
     build:
